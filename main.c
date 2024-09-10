@@ -26,7 +26,7 @@ int main() {
     //     Vector_push(&vec, &temp_vec);
     // }
 
-    // // --------- instead do  like this ---------
+    // // --------- instead do it like this ---------
     for (int i = 0; i < 3; i++) {
         int **temp_vec_ptr = malloc(sizeof(int*));
         *temp_vec_ptr = Vector_init(int);;
@@ -49,6 +49,7 @@ int main() {
 }
 
 
+// this works also but you won't be creating each vector alone, I assume
 int main2() {
     int ***vec = Vector_init(int**);
 

@@ -1,5 +1,5 @@
-#ifndef COMPILER_DETECT_H
-#define COMPILER_DETECT_H
+#ifndef SYSTEM_ENV_H
+#define SYSTEM_ENV_H
 
 // Define macros for compiler checks
 #if defined(__clang__)  // Clang compiler
@@ -61,4 +61,4 @@
 #define COMPILER_SUPPORTS_NESTED_FUNCTIONS COMPILER_IS_GCC
 #define COMPILER_SUPPORTS___BUILTIN_CLZ (COMPILER_IS_CLANG || COMPILER_IS_GCC) // and its derivatives
 
-#endif // COMPILER_DETECT_H
+#endif // SYSTEM_ENV_H
