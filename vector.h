@@ -416,8 +416,8 @@ bool Vector_is_empty(void *vec);
 #define Vector_concat(__vec_ptr1__, __vec_ptr2__) do { \
     assert(((__vec_ptr1__) != NULL) && ((*(__vec_ptr1__)) != NULL)); \
     assert(((__vec_ptr2__) != NULL) && ((*(__vec_ptr2__)) != NULL)); \
-    for (size_t i = 0; i < Vector_length(*(__vec_ptr2__)); i++) { \
-        Vector_push((__vec_ptr1__), (*(__vec_ptr2__))[i]); \
+    for (size_t __i__ = 0; __i__ < Vector_length(*(__vec_ptr2__)); __i__++) { \
+        Vector_push((__vec_ptr1__), (*(__vec_ptr2__))[__i__]); \
     } \
 } while (0)
 
@@ -973,8 +973,8 @@ bool Vector_is_empty(void *vec);
         #define Vector_reduce(__vec_ptr__, __reducer__, __initial_value__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             typeof((__initial_value__)) accumulator = (__initial_value__); \
-            for (size_t i = 0; i < Vector_length(*(__vec_ptr__)); i++) { \
-                accumulator = (__reducer__)(accumulator, (*(__vec_ptr__))[i]); \
+            for (size_t i = 0; __i__ < Vector_length(*(__vec_ptr__)); __i__++) { \
+                accumulator = (__reducer__)(accumulator, (*(__vec_ptr__))[__i__]); \
             } \
             accumulator; \
         })
@@ -989,8 +989,8 @@ bool Vector_is_empty(void *vec);
         #define Vector_reduce(__vec_ptr__, __reducer__, __initial_value__, __accumulator_type__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             __accumulator_type__ accumulator = (__initial_value__); \
-            for (size_t i = 0; i < Vector_length(*(__vec_ptr__)); i++) { \
-                accumulator = (__reducer__)(accumulator, (*(__vec_ptr__))[i]); \
+            for (size_t __i__ = 0; __i__ < Vector_length(*(__vec_ptr__)); __i__++) { \
+                accumulator = (__reducer__)(accumulator, (*(__vec_ptr__))[__i__]); \
             } \
             accumulator; \
         })
