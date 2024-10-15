@@ -62,6 +62,7 @@ void *__vector_init(size_t element_size) {
     header->element_size = element_size;
     header->length = 0;
     header->capacity = VECTOR_INITIAL_CAPACITY;
+    header->free_fn = NULL;
     return header->data;
 }
 
@@ -95,4 +96,10 @@ bool Vector_is_underfilled(void *vec) {
 bool Vector_is_empty(void *vec) {
     assert(vec != NULL);
     return Vector_length(vec) == 0;
+}
+
+void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr)) {
+    void **temp_ptr = (void **)vec_ptr;
+    assert((temp_ptr != NULL) && (*temp_ptr != NULL));
+    __get_vector_header(*temp_ptr)->free_fn = free_fn;
 }

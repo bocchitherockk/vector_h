@@ -15,6 +15,8 @@ typedef struct __Vector_Header {
     size_t element_size;
     size_t length;
     size_t capacity;
+    size_t initial_capacity;
+    void (*free_fn) (void *vec_ptr); // you can cast the pointer to the vector to the type you want and free it
     char data[];
 } __Vector_Header;
 
@@ -166,9 +168,21 @@ bool Vector_is_empty(void *vec);
  */
 #define Vector_destroy(__vec_ptr__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-    free(__get_vector_header(*(__vec_ptr__))); \
-    (*(__vec_ptr__)) = NULL; \
-} while(0)
+    __Vector_Header *__header__ = __get_vector_header(*(__vec_ptr__)); \
+    if (__header__->free_fn == NULL) { \
+        free(__header__); \
+        (*(__vec_ptr__)) = NULL; \
+    } else { \
+        __header__->free_fn((void*)(__vec_ptr__)); \
+    } \
+} while (0)
+
+void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
+// #define Vector_set_free_fn(__vec_ptr__, __free_fn__) do {
+//     __Vector_Header *__header__ = __get_vector_header(*(__vec_ptr__));
+//     __header__->free_fn = (void (*)(void*))(__free_fn__);
+// } while (0)
+
 
 /**
  * PUBLIC
@@ -973,7 +987,7 @@ bool Vector_is_empty(void *vec);
         #define Vector_reduce(__vec_ptr__, __reducer__, __initial_value__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             typeof((__initial_value__)) accumulator = (__initial_value__); \
-            for (size_t i = 0; __i__ < Vector_length(*(__vec_ptr__)); __i__++) { \
+            for (size_t __i__ = 0; __i__ < Vector_length(*(__vec_ptr__)); __i__++) { \
                 accumulator = (__reducer__)(accumulator, (*(__vec_ptr__))[__i__]); \
             } \
             accumulator; \

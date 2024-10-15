@@ -1,9 +1,10 @@
 CC = gcc
-CFLAGS = -Wall -g
-LDFLAGS =
+CFLAGS = # -Wall -g # -Wall flag is used to enable all warnings
+# LDFLAGS = -I../ -lvector -L../lib --static
+LDFLAGS = -I../ -lvector -L../lib -Wl,-rpath=../lib
 
-files = "vector.c"
- 
+files = "main.c"
+
 verbose_mode = $(or $(verbose), $(v))
 
 ############ compile ############
@@ -140,7 +141,7 @@ lib_path = lib/
 
 
 ############ static library ############
-static_lib_name = libvector.a
+static_lib_name = libmylibrary.a
 static: object
 	@mkdir -p $(lib_path)
 	@if [ $(verbose_mode) ]; then \
@@ -153,7 +154,7 @@ static: object
 
 
 ############ dynamic library (shared) ############
-shared_lib_name = libvector.so
+shared_lib_name = libmylibrary.so
 shared: object
 	@mkdir -p $(lib_path)
 	@if [ $(verbose_mode) ]; then \

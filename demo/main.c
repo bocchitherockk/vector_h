@@ -17,8 +17,19 @@ void print_vector(int ***vec) {
     printf("]\n");
 }
 
+void free_fn(void *vec_ptr) {
+    int ****temp_vec = (int ****)vec_ptr;
+    printf("vector length: %zu\n", Vector_length(*temp_vec));
+    for (int i = 0; i < Vector_length(*temp_vec); i++) {
+        Vector_destroy((*temp_vec)[i]);
+        free((*temp_vec)[i]);
+    }
+    free(__get_vector_header(*temp_vec));
+}
+
 int main() {
     int ***vec = Vector_init(int**);
+    Vector_set_free_fn(&vec, free_fn);
 
     // // --------- does not work like this ---------
     // for (int i = 0; i < 3; i++) {
@@ -29,7 +40,7 @@ int main() {
     // // --------- instead do it like this ---------
     for (int i = 0; i < 3; i++) {
         int **temp_vec_ptr = malloc(sizeof(int*));
-        *temp_vec_ptr = Vector_init(int);;
+        *temp_vec_ptr = Vector_init(int);
         Vector_push(&vec, temp_vec_ptr);
     }
 
@@ -44,6 +55,8 @@ int main() {
     print_vector(vec);
     Vector_push(vec[0], 5);
     print_vector(vec);
+
+    Vector_destroy(&vec);
 
     return 0;
 }

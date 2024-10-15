@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <time.h>
-#include "./vector.h"
+#include <vector.h>
 
 void print_vector_int(int *vec) {
     printf("{\n");
@@ -35,6 +35,12 @@ bool any_all(int value) { return value == 10; }
 void set_all_to_10(int *value) { *value = 10; }
 
 
+void my_free(void *vec_ptr) {
+    void **temp_ptr = (void **)vec_ptr;
+    free(__get_vector_header(*temp_ptr));
+    *temp_ptr = NULL;
+}
+
 int main() {
     printf("COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS: %s\n", COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS ? "true" : "false");
     printf("COMPILER_SUPPORTS_TYPEOF: %s\n", COMPILER_SUPPORTS_TYPEOF ? "true" : "false");
@@ -43,6 +49,8 @@ int main() {
 
     printf("initializing vector vec1 ...\n");
     int *vec1 = Vector_init(int);
+    Vector_set_free_fn(&vec1, my_free);
+
     printf("vector vec1 initialized\n");
     printf("vec1 : ");
     print_vector_int(vec1);
@@ -110,6 +118,7 @@ int main() {
         int *vec2 = NULL;
         Vector_copy(&vec1, &vec2);
     #endif
+    Vector_set_free_fn(&vec2, my_free);
     printf("copyed vec1 to vec2\n");
     printf("vec2 : ");
     print_vector_int(vec2);
@@ -155,6 +164,8 @@ int main() {
             Vector_filter(&vec2, filter, &vec3, int);
         #endif
     #endif
+    Vector_set_free_fn(&vec3, my_free);
+
     printf("vec3 : ");
     print_vector_int(vec3);
 
@@ -179,6 +190,7 @@ int main() {
             Vector_map(&vec3, map, &vec4, int);
         #endif
     #endif
+    Vector_set_free_fn(&vec4, my_free);
     printf("vec4 : ");
     print_vector_int(vec4);
 
@@ -249,6 +261,8 @@ int main() {
             Vector_slice(&vec4, 0, Vector_length(vec4), 2, &vec5, int);
         #endif
     #endif
+    Vector_set_free_fn(&vec5, my_free);
+
     printf("vec5 : ");
     print_vector_int(vec5);
 
