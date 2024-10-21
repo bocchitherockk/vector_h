@@ -48,11 +48,12 @@ static void *__vector_realloc(void *vec, size_t new_capacity) {
     }
 #endif
 
-void __vector_resize(void **vec_ptr) {
-    __Vector_Header *header = __get_vector_header(*vec_ptr);
+void __vector_resize(void *vec_ptr) {
+    void **temp_ptr = (void**)vec_ptr;
+    __Vector_Header *header = __get_vector_header(*temp_ptr);
     size_t optimal_capacity = __vector_get_optimal_capacity(header->length);
     if (optimal_capacity != header->capacity) {
-        *vec_ptr = __vector_realloc(*vec_ptr, optimal_capacity);
+        *temp_ptr = __vector_realloc(*temp_ptr, optimal_capacity);
     }
 }
 

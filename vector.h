@@ -37,7 +37,7 @@ __Vector_Header *__get_vector_header(void *vec);
  * resizes the vector if the capacity is not optimal
  * @param vec_ptr [T**] - the pointer to the vector to resize
  */
-void __vector_resize(void **vec_ptr);
+void __vector_resize(void *vec_ptr);
 
 /**
  * INTERNAL
@@ -177,12 +177,23 @@ bool Vector_is_empty(void *vec);
     } \
 } while (0)
 
+/**
+ * PUBLIC
+ * 
+ * sets the free function of the vector
+ * @param vec_ptr [T*] - a reference to the vector
+ * @param free_fn [void (*)(T*)] - the free function to free the vector
+ * @throw [assert] - if the vector is NULL
+ * @example
+ * ```
+ * int *vec = Vector_init(int);
+ * Vector_set_free_fn(&vec, void (void *vec_ptr) => {
+ *      printf("freeing the vector\n");
+ *      free(__get_vector_header(*((void**)vec_ptr)));
+ * });
+ * ```
+ */
 void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
-// #define Vector_set_free_fn(__vec_ptr__, __free_fn__) do {
-//     __Vector_Header *__header__ = __get_vector_header(*(__vec_ptr__));
-//     __header__->free_fn = (void (*)(void*))(__free_fn__);
-// } while (0)
-
 
 /**
  * PUBLIC
@@ -308,7 +319,7 @@ void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
  */
 #define Vector_push(__vec_ptr__, __value__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-    __vector_resize((void**)(__vec_ptr__));\
+    __vector_resize((__vec_ptr__));\
     __Vector_Header *__header__ = __get_vector_header(*(__vec_ptr__)); \
     (*(__vec_ptr__))[__header__->length++] = (__value__); \
 } while (0)
@@ -335,7 +346,7 @@ void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
     __Vector_Header *__header__ = __get_vector_header(*(__vec_ptr__)); \
     assert((__index__) >= 0 && (__index__) <= __header__->length); \
-    __vector_resize((void**)(__vec_ptr__)); \
+    __vector_resize((__vec_ptr__)); \
     memmove((*(__vec_ptr__)) + (__index__) + 1, (*(__vec_ptr__)) + (__index__), (__header__->length - (__index__)) * __header__->element_size); \
     (*(__vec_ptr__))[(__index__)] = (__value__); \
     __header__->length++; \
@@ -365,7 +376,7 @@ void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
      */
     #define Vector_insert_sorted(__vec_ptr__, __value__, __ordering_comparator__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        __vector_resize((void**)(__vec_ptr__)); \
+        __vector_resize((__vec_ptr__)); \
         __Vector_Header *__header__ = __get_vector_header(*(__vec_ptr__)); \
         size_t __low__ = 0; \
         size_t __high__ = __header__->length; \
@@ -390,7 +401,7 @@ void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
      */
     #define Vector_insert_sorted(__vec_ptr__, __value__, __ordering_comparator__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        __vector_resize((void**)(__vec_ptr__)); \
+        __vector_resize((__vec_ptr__)); \
         __Vector_Header *__header__ = __get_vector_header(*(__vec_ptr__)); \
         size_t __low__ = 0; \
         size_t __high__ = __header__->length; \
@@ -456,7 +467,7 @@ void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
     __Vector_Header *__header__ = __get_vector_header(*(__vec_ptr__)); \
     assert(__header__->length > 0); \
     __header__->length--; \
-    __vector_resize((void**)(__vec_ptr__)); \
+    __vector_resize((__vec_ptr__)); \
 } while (0)
 
 /**
@@ -482,7 +493,7 @@ void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
     assert((__index__) >= 0 && (__index__) < __header__->length); \
     memmove((*(__vec_ptr__)) + (__index__), (*(__vec_ptr__)) + (__index__) + 1, (__header__->length - (__index__) - 1) * __header__->element_size); \
     __header__->length--; \
-    __vector_resize((void**)(__vec_ptr__)); \
+    __vector_resize((__vec_ptr__)); \
 } while (0)
 
 /**
@@ -550,7 +561,7 @@ void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
     __Vector_Header *__header__ = __get_vector_header(*(__vec_ptr__)); \
     __header__->length = 0; \
-    __vector_resize((void**)(__vec_ptr__)); \
+    __vector_resize((__vec_ptr__)); \
 } while (0)
 
 /**
