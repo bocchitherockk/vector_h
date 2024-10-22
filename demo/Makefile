@@ -3,9 +3,10 @@ CFLAGS = # -Wall -g # -Wall flag is used to enable all warnings
 # LDFLAGS = -I../ -lvector -L../lib --static
 LDFLAGS = -I../ -lvector -L../lib -Wl,-rpath=../lib
 
-# files = "main.c"
-# files = "demo default free.c"
-files = "demo costum free.c"
+files = "main.c"
+# files = "costum free.c"
+# files = "initial capacity.c"
+# files = "costum optimal capacity.c"
 
 verbose_mode = $(or $(verbose), $(v))
 

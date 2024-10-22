@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "./vector.h"
 #include "./modules/system_env/system_env.h"
 
@@ -5,6 +6,7 @@ __Vector_Header *__get_vector_header(void *vec) {
     assert(vec != NULL);
     return vec - sizeof(__Vector_Header);
 }
+
 /**
  * INTERNAL
  * 
@@ -25,7 +27,6 @@ static void *__vector_realloc(void *vec, size_t new_capacity) {
     return new_vec->data;
 }
 
-
 /**
  * INTERNAL
  * 
@@ -34,16 +35,20 @@ static void *__vector_realloc(void *vec, size_t new_capacity) {
  * @return [size_t] - the optimal capacity for the vector
  */
 #if COMPILER_SUPPORTS___BUILTIN_CLZ
-    static size_t __vector_get_optimal_capacity(size_t length) {
-        if (length < VECTOR_INITIAL_CAPACITY) { return VECTOR_INITIAL_CAPACITY; }
-        size_t optimal_capacity = VECTOR_INITIAL_CAPACITY << (__builtin_clzl(VECTOR_INITIAL_CAPACITY) - __builtin_clzl(length));
-        return optimal_capacity <= length ? optimal_capacity << 1 : optimal_capacity;
+    static size_t __vector_get_basic_optimal_capacity(void *vec_ptr) {
+        void **temp_ptr = (void**)vec_ptr;
+        __Vector_Header *header = __get_vector_header(*temp_ptr);
+        if (header->length < header->initial_capacity) { return header->initial_capacity; }
+        size_t optimal_capacity = header->initial_capacity << (__builtin_clzl(header->initial_capacity) - __builtin_clzl(header->length));
+        return optimal_capacity <= header->length ? optimal_capacity << 1 : optimal_capacity;
     }
 #else
-    static size_t __vector_get_optimal_capacity(size_t length) {
-        if (length < VECTOR_INITIAL_CAPACITY) { return VECTOR_INITIAL_CAPACITY; }
-        size_t optimal_capacity = VECTOR_INITIAL_CAPACITY;
-        while (optimal_capacity <= length) { optimal_capacity <<= 1; }
+    static size_t __vector_get_basic_optimal_capacity(void *vec_ptr) {
+        void **temp_ptr = (void**)vec_ptr;
+        __Vector_Header *header = __get_vector_header(*temp_ptr);
+        if (header->length < header->initial_capacity) { return header->initial_capacity; }
+        size_t optimal_capacity = header->initial_capacity;
+        while (optimal_capacity <= header->length) { optimal_capacity <<= 1; }
         return optimal_capacity;
     }
 #endif
@@ -51,19 +56,21 @@ static void *__vector_realloc(void *vec, size_t new_capacity) {
 void __vector_resize(void *vec_ptr) {
     void **temp_ptr = (void**)vec_ptr;
     __Vector_Header *header = __get_vector_header(*temp_ptr);
-    size_t optimal_capacity = __vector_get_optimal_capacity(header->length);
+    size_t optimal_capacity = header->optimal_capacity_fn == NULL ? __vector_get_basic_optimal_capacity(vec_ptr) : header->optimal_capacity_fn(vec_ptr);
     if (optimal_capacity != header->capacity) {
         *temp_ptr = __vector_realloc(*temp_ptr, optimal_capacity);
     }
 }
 
 void *__vector_init(size_t element_size) {
-    __Vector_Header *header = malloc(sizeof(__Vector_Header) + element_size * VECTOR_INITIAL_CAPACITY);
+    __Vector_Header *header = malloc(sizeof(__Vector_Header) + element_size * VECTOR_DEFAULT_INITIAL_CAPACITY);
     assert(header != NULL);
     header->element_size = element_size;
     header->length = 0;
-    header->capacity = VECTOR_INITIAL_CAPACITY;
+    header->capacity = VECTOR_DEFAULT_INITIAL_CAPACITY;
+    header->initial_capacity = VECTOR_DEFAULT_INITIAL_CAPACITY;
     header->free_fn = NULL;
+    header->optimal_capacity_fn = NULL;
     return header->data;
 }
 
@@ -82,6 +89,11 @@ size_t Vector_capacity(void *vec) {
     return __get_vector_header(vec)->capacity;
 }
 
+size_t Vector_initial_capacity(void *vec) {
+    assert(vec != NULL);
+    return __get_vector_header(vec)->initial_capacity;
+}
+
 bool Vector_is_full(void *vec) {
     assert(vec != NULL);
     __Vector_Header *header = __get_vector_header(vec);
@@ -91,7 +103,7 @@ bool Vector_is_full(void *vec) {
 bool Vector_is_underfilled(void *vec) {
     assert(vec != NULL);
     __Vector_Header *header = __get_vector_header(vec);
-    return header->capacity > VECTOR_INITIAL_CAPACITY && header->length * 2 < header->capacity;
+    return header->capacity > header->initial_capacity && header->length * 2 < header->capacity;
 }
 
 bool Vector_is_empty(void *vec) {
@@ -99,8 +111,22 @@ bool Vector_is_empty(void *vec) {
     return Vector_length(vec) == 0;
 }
 
+void Vector_set_initial_capacity(void *vec_ptr, size_t initial_capacity) {
+    // this function calls __vector_resize to immidiately resize the vector if it needs to (the optimal capacity relies on the initial capacity)
+    void **temp_ptr = (void **)vec_ptr;
+    assert((temp_ptr != NULL) && (*temp_ptr != NULL));
+    __get_vector_header(*temp_ptr)->initial_capacity = initial_capacity;
+    __vector_resize(vec_ptr);
+}
+
 void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr)) {
     void **temp_ptr = (void **)vec_ptr;
     assert((temp_ptr != NULL) && (*temp_ptr != NULL));
     __get_vector_header(*temp_ptr)->free_fn = free_fn;
+}
+
+void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)(void *vec_ptr)) {
+    void **temp_ptr = (void **)vec_ptr;
+    assert((temp_ptr != NULL) && (*temp_ptr != NULL));
+    __get_vector_header(*temp_ptr)->optimal_capacity_fn = optimal_capacity_fn;
 }

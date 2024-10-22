@@ -7,7 +7,7 @@
 #include <assert.h>
 #include "./modules/system_env/system_env.h"
 
-#define VECTOR_INITIAL_CAPACITY 4
+#define VECTOR_DEFAULT_INITIAL_CAPACITY 4
 
 // i am storing the element size in the header so that i can have a workaround
 // for some functions for the compilers that do not support 'typeof' keyword
@@ -17,6 +17,7 @@ typedef struct __Vector_Header {
     size_t capacity;
     size_t initial_capacity;
     void (*free_fn) (void *vec_ptr); // you can cast the pointer to the vector to the type you want and free it
+    size_t (*optimal_capacity_fn) (void *vec_ptr);
     char data[];
 } __Vector_Header;
 
@@ -103,10 +104,25 @@ size_t Vector_length(void *vec);
  * @example
  * ```
  * int *vec = Vector_init(int);
- * size_t capacity = Vector_capacity(vec); // should return VECTOR_INITIAL_CAPACITY
+ * size_t capacity = Vector_capacity(vec);
  * ```
  */
 size_t Vector_capacity(void *vec);
+
+/**
+ * PUBLIC
+ * 
+ * returns the initial capacity of a vector
+ * @param vec [T*] - the vector to get the initial capacity of
+ * @return [size_t] - the initial capacity of the vector
+ * @throw [assert] - if the vector is NULL
+ * @example
+ * ```
+ * int *vec = Vector_init(int);
+ * size_t initial_capacity = Vector_initial_capacity(vec);
+ * ```
+ */
+size_t Vector_initial_capacity(void *vec);
 
 /**
  * PUBLIC
@@ -125,7 +141,7 @@ bool Vector_is_full(void *vec);
 /**
  * PUBLIC
  * 
- * returns true if the capacity is less than half full (there is a lot of unused space) and capacity > VECTOR_INITIAL_CAPACITY (the VECTOR_INITIAL_CAPACITY is the minimum capacity)
+ * returns true if the capacity is less than half full (there is a lot of unused space) and capacity > initial_capacity (the initial_capacity is the minimum capacity)
  * @param vec [T*] - the vector to check if it is underfilled
  * @return [bool] - true if the vector is underfilled, false otherwise
  * @throw [assert] - if the vector is NULL
@@ -156,6 +172,58 @@ bool Vector_is_empty(void *vec);
 /**
  * PUBLIC
  * 
+ * sets the free function of the vector
+ * @param vec_ptr [T**] - a reference to the vector
+ * @param free_fn [void (*)(T*)] - the free function to free the vector
+ * @throw [assert] - if the reference to the vector is NULL
+ * @throw [assert] - if the vector is NULL
+ * @example
+ * ```
+ * int *vec = Vector_init(int);
+ * Vector_set_free_fn(&vec, void (void *vec_ptr) => {
+ *      printf("freeing the vector\n");
+ *      free(__get_vector_header(*((void**)vec_ptr)));
+ * });
+ * ```
+ */
+void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
+
+/**
+ * PUBLIC
+ * 
+ * sets the initial capacity of the vector and resizes it immediately
+ * the default initial capacity is 4
+ * @param vec_ptr [T**] - a reference to the vector
+ * @param initial_capacity [size_t] - the initial capacity of the vector
+ * @throw [assert] - if the reference to the vector is NULL
+ * @throw [assert] - if the vector is NULL
+ * @example
+ * ```
+ * int *vec = Vector_init(int);
+ * Vector_set_initial_capacity(&vec, 10);
+ * ```
+ */
+void Vector_set_initial_capacity(void *vec_ptr, size_t initial_capacity);
+
+/**
+ * PUBLIC
+ * 
+ * sets the function that calculates the optimal capacity of the vector
+ * @param vec_ptr [T**] - a reference to the vector
+ * @param optimal_capacity_fn [size_t (*)(void*)] - the function that calculates the optimal capacity of the vector
+ * @throw [assert] - if the reference to the vector is NULL
+ * @throw [assert] - if the vector is NULL
+ * @example
+ * ```
+ * int *vec = Vector_init(int);
+ * Vector_set_optimal_capacity_fn(&vec, costum_get_optimal_capacity);
+ * ```
+ */
+void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)(void *vec_ptr));
+
+/**
+ * PUBLIC
+ * 
  * destroys a vector
  * @param __vec_ptr__ [T**] - a reference to the vector to destroy
  * @throw [assert] - if the reference to the vector is NULL
@@ -176,24 +244,6 @@ bool Vector_is_empty(void *vec);
         __header__->free_fn((void*)(__vec_ptr__)); \
     } \
 } while (0)
-
-/**
- * PUBLIC
- * 
- * sets the free function of the vector
- * @param vec_ptr [T*] - a reference to the vector
- * @param free_fn [void (*)(T*)] - the free function to free the vector
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_set_free_fn(&vec, void (void *vec_ptr) => {
- *      printf("freeing the vector\n");
- *      free(__get_vector_header(*((void**)vec_ptr)));
- * });
- * ```
- */
-void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
 
 /**
  * PUBLIC
@@ -319,7 +369,7 @@ void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
  */
 #define Vector_push(__vec_ptr__, __value__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-    __vector_resize((__vec_ptr__));\
+    __vector_resize((__vec_ptr__)); \
     __Vector_Header *__header__ = __get_vector_header(*(__vec_ptr__)); \
     (*(__vec_ptr__))[__header__->length++] = (__value__); \
 } while (0)
