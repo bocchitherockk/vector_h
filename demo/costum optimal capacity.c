@@ -3,13 +3,13 @@
 
 
 void print_vec(int **vec_ptr) {
-    printf("capacity = %zu,", Vector_capacity(*vec_ptr));
-    printf("\tlength = %zu\n", Vector_length(*vec_ptr));
+    printf("capacity = %zu,", Vector_capacity(vec_ptr));
+    printf("\tlength = %zu\n", Vector_length(vec_ptr));
 }
 
 size_t get_optimal_capacity(void *vec_ptr) {
     void **temp_ptr = (void**)vec_ptr;
-    __Vector_Header *header = __get_vector_header(*temp_ptr);
+    __Vector_Header *header = __get_vector_header(temp_ptr);
     if (header->length == header->capacity) {
         return header->capacity + 2;
     }

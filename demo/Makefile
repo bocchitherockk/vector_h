@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = # -Wall -g # -Wall flag is used to enable all warnings
+CFLAGS = -Wall -g # -Wall flag is used to enable all warnings
 # LDFLAGS = -I../ -lvector -L../lib --static
 LDFLAGS = -I../ -lvector -L../lib -Wl,-rpath=../lib
 

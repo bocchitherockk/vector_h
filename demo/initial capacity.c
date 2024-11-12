@@ -3,9 +3,9 @@
 
 
 void print_vec(int **vec_ptr) {
-    printf("capacity = %zu,", Vector_capacity(*vec_ptr));
-    printf("\tinitial capacity = %zu,", Vector_initial_capacity(*vec_ptr));
-    printf("\tlength = %zu\n", Vector_length(*vec_ptr));
+    printf("capacity = %zu,", Vector_capacity(vec_ptr));
+    printf("\tinitial capacity = %zu,", Vector_initial_capacity(vec_ptr));
+    printf("\tlength = %zu\n", Vector_length(vec_ptr));
 }
 
 int main()  {

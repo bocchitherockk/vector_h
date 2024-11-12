@@ -4,13 +4,13 @@
 
 void print_vector_int(int *vec) {
     printf("{\n");
-    printf("    element_size: %ld\n", Vector_element_size(vec));
-    printf("    length: %ld\n", Vector_length(vec));
-    printf("    capacity: %ld\n", Vector_capacity(vec));
+    printf("    element_size: %ld\n", Vector_element_size(&vec));
+    printf("    length: %ld\n", Vector_length(&vec));
+    printf("    capacity: %ld\n", Vector_capacity(&vec));
     printf("    data: [");
-    if (Vector_length(vec) != 0) {
+    if (Vector_length(&vec) != 0) {
         printf("%d", vec[0]);
-        for (size_t i = 1; i < Vector_length(vec); i++) {
+        for (size_t i = 1; i < Vector_length(&vec); i++) {
             printf(", %d", vec[i]);
         }
     }
@@ -238,17 +238,17 @@ int main() {
     printf("slicing vec4 from index 0 to 10 with a step of 2 and storing the result in vec5 ...\n");
     #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
         #if COMPILER_SUPPORTS_TYPEOF
-            int *vec5 = Vector_slice(&vec4, 0, Vector_length(vec4), 2);
+            int *vec5 = Vector_slice(&vec4, 0, Vector_length(&vec4), 2);
         #else
-            int *vec5 = Vector_slice(&vec4, 0, Vector_length(vec4), 2, int);
+            int *vec5 = Vector_slice(&vec4, 0, Vector_length(&vec4), 2, int);
         #endif
     #else
         #if COMPILER_SUPPORTS_TYPEOF
             int *vec5 = NULL;
-            Vector_slice(&vec4, 0, Vector_length(vec4), 2, &vec5);
+            Vector_slice(&vec4, 0, Vector_length(&vec4), 2, &vec5);
         #else
             int *vec5 = NULL;
-            Vector_slice(&vec4, 0, Vector_length(vec4), 2, &vec5, int);
+            Vector_slice(&vec4, 0, Vector_length(&vec4), 2, &vec5, int);
         #endif
     #endif
 
