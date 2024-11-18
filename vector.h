@@ -1,6 +1,10 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#ifdef __cplusplus // C++ support
+extern "C" {
+#endif // C++ support
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -1318,5 +1322,9 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         } while (0)
     #endif
 #endif
+
+#ifdef __cplusplus // C++ support
+}
+#endif // C++ support
 
 #endif // VECTOR_H
