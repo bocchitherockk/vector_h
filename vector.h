@@ -2,6 +2,9 @@
 #define VECTOR_H
 
 #ifdef __cplusplus // C++ support
+
+#warning c++ compilers do not automatically cast void* to other types, you have to cast the result of Vector_copy manually
+#warning example: int *result = (int*)Vector_copy(&vec1);
 extern "C" {
 #endif // C++ support
 
@@ -731,8 +734,8 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         int __i__, __j__, __k__; \
         int __n1__ = (__mid__) - (__left_size__) + 1; \
         int __n2__ =  (__right_size__) - (__mid__); \
-        typeof(*(__arr__)) *__left_array__ = malloc(__n1__ * sizeof(*(__arr__))); \
-        typeof(*(__arr__)) *__right_array__ = malloc(__n2__ * sizeof(*(__arr__))); \
+        typeof(*(__arr__)) *__left_array__ = (typeof(__arr__))malloc(__n1__ * sizeof(*(__arr__))); \
+        typeof(*(__arr__)) *__right_array__ = (typeof(__arr__))malloc(__n2__ * sizeof(*(__arr__))); \
         for (__i__ = 0; __i__ < __n1__; __i__++) { \
             __left_array__[__i__] = (__arr__)[(__left_size__) + __i__]; \
         } \
@@ -787,8 +790,8 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         int __i__, __j__, __k__; \
         int __n1__ = (__mid__) - (__left_size__) + 1; \
         int __n2__ =  (__right_size__) - (__mid__); \
-        __vec_element_type__ *__left_array__ = malloc(__n1__ * sizeof(*(__arr__))); \
-        __vec_element_type__ *__right_array__ = malloc(__n2__ * sizeof(*(__arr__))); \
+        __vec_element_type__ *__left_array__ = (__vec_element_type__ *)malloc(__n1__ * sizeof(*(__arr__))); \
+        __vec_element_type__ *__right_array__ = (__vec_element_type__ *)malloc(__n2__ * sizeof(*(__arr__))); \
         for (__i__ = 0; __i__ < __n1__; __i__++) { \
             __left_array__[__i__] = (__arr__)[(__left_size__) + __i__]; \
         } \
@@ -860,7 +863,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             typeof(*(__vec_ptr__)) __new_vec__ = Vector_init(typeof(**(__vec_ptr__))); \
             for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
-                if (__filter__((*(__vec_ptr__))[__i__])) { \
+                if ((__filter__)((*(__vec_ptr__))[__i__])) { \
                     Vector_push(&__new_vec__, (*(__vec_ptr__))[__i__]); \
                 } \
             } \
