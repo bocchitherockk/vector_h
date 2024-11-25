@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "./vector.h"
-#include "./modules/system_env/system_env.h"
+#include <system_env.h>
 
 __Vector_Header *__get_vector_header(void *vec_ptr) {
     void **temp_ptr = (void **)vec_ptr;
@@ -36,7 +36,7 @@ static void *__vector_realloc(void *vec_ptr, size_t new_capacity) {
  * @param length [size_t] - the length of the vector
  * @return [size_t] - the optimal capacity for the vector
  */
-#if COMPILER_SUPPORTS___BUILTIN_CLZ
+#if COMPILER_SUPPORTS_BUILTIN_CLZ
     static size_t __vector_get_basic_optimal_capacity(void *vec_ptr) {
         __Vector_Header *header = __get_vector_header(vec_ptr);
         if (header->length < header->initial_capacity) { return header->initial_capacity; }

@@ -38,7 +38,7 @@ void set_all_to_10(int *value) { *value = 10; }
 int main() {
     printf("COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS: %s\n", COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS ? "true" : "false");
     printf("COMPILER_SUPPORTS_TYPEOF: %s\n", COMPILER_SUPPORTS_TYPEOF ? "true" : "false");
-    printf("COMPILER_SUPPORTS___BUILTIN_CLZ: %s\n", COMPILER_SUPPORTS___BUILTIN_CLZ ? "true" : "false");
+    printf("COMPILER_SUPPORTS_BUILTIN_CLZ: %s\n", COMPILER_SUPPORTS_BUILTIN_CLZ ? "true" : "false");
     srand(time(NULL));
 
     printf("initializing vector vec1 ...\n");
