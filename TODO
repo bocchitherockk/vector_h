@@ -1,0 +1,6 @@
+TODO: Update in code comment documentation
+TODO: Update README.md
+
+DONE: Make Vector_pop and Vector_remove_at statement expressions, (reason: seg fault if the vector is empty)
+
+Cancelled: Refactor code via supported compiler features

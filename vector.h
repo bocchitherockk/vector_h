@@ -1,8 +1,7 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#ifdef __cplusplus // C++ support
-
+#if LANGUAGE_CPP // C++ support
 #warning c++ compilers do not automatically cast void* to other types, you have to cast the result of Vector_copy manually
 #warning example: int *result = (int*)Vector_copy(&vec1);
 extern "C" {
@@ -506,55 +505,148 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     } \
 } while (0)
 
-/**
- * PUBLIC
- * 
- * pops the last value from the vector
- * @param __vec_ptr__ [T**] - a reference to the vector
- * @return [T] - the value popped from the vector
- * @throw [assert] - if the vector is NULL
- * @throw [assert] - if malloc fails
- * @throw [assert] - if the vector is empty
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_push(&vec, 1);
- * int value = Vector_pop(&vec); // should return 1
- * ```
- */
-#define Vector_pop(__vec_ptr__) (*(__vec_ptr__))[Vector_length((__vec_ptr__)) - 1]; do { \
-    assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-    __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
-    assert(__header__->length > 0); \
-    __header__->length--; \
-    __vector_resize((__vec_ptr__)); \
-} while (0)
+#if COMPILER_SUPPORTS_STATEMENT_EXPESSIONS
+    #if COMPILER_SUPPORTS_TYPEOF
+        /**
+         * PUBLIC
+         * 
+         * pops the last value from the vector
+         * @param __vec_ptr__ [T**] - a reference to the vector
+         * @return [T] - the value popped from the vector
+         * @throw [assert] - if the vector is NULL
+         * @throw [assert] - if malloc fails
+         * @throw [assert] - if the vector is empty
+         * @example
+         * ```
+         * int *vec = Vector_init(int);
+         * Vector_push(&vec, 1);
+         * int value = Vector_pop(&vec); // should return 1
+         * ```
+         */
+        #define Vector_pop(__vec_ptr__) (*(__vec_ptr__))[Vector_length((__vec_ptr__)) - 1]; do ({ \
+            assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
+            __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+            assert(__header__->length > 0); \
+            typeof(**(__vec_ptr__)) __value__ = (*(__vec_ptr__))[__header__->length - 1]; \
+            __header__->length--; \
+            __vector_resize((__vec_ptr__)); \
+            __value__; \
+        })
+    #else
+        #define Vector_pop(__vec_ptr__, __vec_element_type__) ({ \
+            assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
+            __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+            assert(__header__->length > 0); \
+            __vec_element_type__ __value__; \
+            memcpy(&__value__, (*(__vec_ptr__)) + __header__->length - 1, __header__->element_size); \
+            __header__->length--; \
+            __vector_resize((__vec_ptr__)); \
+            __value__; \
+        })
+    #endif
+#else
+    /**
+     * PUBLIC
+     * 
+     * pops the last value from the vector
+     * @param __vec_ptr__ [T**] - a reference to the vector
+     * @param __result_ptr__ [T*] - a pointer to the variable to store the popped value in, if NULL, the result will not be stored but the function will execute normally
+     * @throw [assert] - if the vector is NULL
+     * @throw [assert] - if malloc fails
+     * @throw [assert] - if the vector is empty
+     * @example
+     * ```
+     * int *vec = Vector_init(int);
+     * Vector_push(&vec, 1);
+     * int value;
+     * Vector_pop(&vec, &value); // should return 1
+     * ```
+     */
+    #define Vector_pop(__vec_ptr__, __result_ptr__) do { \
+        assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
+        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+        assert(__header__->length > 0); \
+        if ((__result_ptr__) != NULL) { \
+            (*(__result_ptr__)) = (*(__vec_ptr__))[__header__->length - 1]; \
+        } \
+        __header__->length--; \
+        __vector_resize((__vec_ptr__)); \
+    } while (0)
+#endif
 
-/**
- * PUBLIC
- * 
- * removes the value at the specified index from the vector
- * @param __vec_ptr__ [T**] - a reference to the vector
- * @param __index__ [size_t] - the index to remove the value from
- * @return [T] - the value removed from the vector
- * @throw [assert] - if the vector is NULL
- * @throw [assert] - if malloc fails
- * @throw [assert] - if the index is out of bounds
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_push(&vec, 1);
- * Vector_remove_at(&vec, 0); // should remove 1 from the vector
- * ```
- */
-#define Vector_remove_at(__vec_ptr__, __index__) (*(__vec_ptr__))[(__index__)]; do { \
-    assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-    __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
-    assert((__index__) >= 0 && (__index__) < __header__->length); \
-    memmove((*(__vec_ptr__)) + (__index__), (*(__vec_ptr__)) + (__index__) + 1, (__header__->length - (__index__) - 1) * __header__->element_size); \
-    __header__->length--; \
-    __vector_resize((__vec_ptr__)); \
-} while (0)
+#if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
+    #if COMPILER_SUPPORTS_TYPEOF
+        /**
+         * PUBLIC
+         * 
+         * removes the value at the specified index from the vector
+         * @param __vec_ptr__ [T**] - a reference to the vector
+         * @param __index__ [size_t] - the index to remove the value from
+         * @return [T] - the value removed from the vector
+         * @throw [assert] - if the vector is NULL
+         * @throw [assert] - if malloc fails
+         * @throw [assert] - if the index is out of bounds
+         * @example
+         * ```
+         * int *vec = Vector_init(int);
+         * Vector_push(&vec, 1);
+         * Vector_remove_at(&vec, 0); // should remove 1 from the vector
+         * ```
+         */
+        #define Vector_remove_at(__vec_ptr__, __index__) ({ \
+            assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
+            __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+            assert((__index__) >= 0 && (__index__) < __header__->length); \
+            typeof(**(__vec_ptr__)) __value__ = (*(__vec_ptr__))[(__index__)]; \
+            memmove((*(__vec_ptr__)) + (__index__), (*(__vec_ptr__)) + (__index__) + 1, (__header__->length - (__index__) - 1) * __header__->element_size); \
+            __header__->length--; \
+            __vector_resize((__vec_ptr__)); \
+            __value__; \
+        })
+    #else
+        #define Vector_remove_at(__vec_ptr__, __index__, __vec_element_type__) ({ \
+            assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
+            __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+            assert((__index__) >= 0 && (__index__) < __header__->length); \
+            __vec_element_type__ __value__ = (*(__vec_ptr__))[(__index__)]; \
+            memcpy(&__value__, (*(__vec_ptr__)) + (__index__), __header__->element_size); \
+            memmove((*(__vec_ptr__)) + (__index__), (*(__vec_ptr__)) + (__index__) + 1, (__header__->length - (__index__) - 1) * __header__->element_size); \
+            __header__->length--; \
+            __vector_resize((__vec_ptr__)); \
+            __value__; \
+        })
+    #endif
+#else
+    /**
+     * PUBLIC
+     * 
+     * removes the value at the specified index from the vector
+     * @param __vec_ptr__ [T**] - a reference to the vector
+     * @param __index__ [size_t] - the index to remove the value from
+     * @param __result_ptr__ [T*] - a pointer to the variable to store the removed value in, if NULL, the result will not be stored but the function will execute normally
+     * @throw [assert] - if the vector is NULL
+     * @throw [assert] - if malloc fails
+     * @throw [assert] - if the index is out of bounds
+     * @example
+     * ```
+     * int *vec = Vector_init(int);
+     * Vector_push(&vec, 1);
+     * int value;
+     * Vector_remove_at(&vec, 0, &value); // should remove 1 from the vector
+     * ```
+     */
+    #define Vector_remove_at(__vec_ptr__, __index__, __result_ptr__) do { \
+        assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
+        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+        assert((__index__) >= 0 && (__index__) < __header__->length); \
+        if ((__result_ptr__) != NULL) { \
+            (*(__result_ptr__)) = (*(__vec_ptr__))[(__index__)]; \
+        } \
+        memmove((*(__vec_ptr__)) + (__index__), (*(__vec_ptr__)) + (__index__) + 1, (__header__->length - (__index__) - 1) * __header__->element_size); \
+        __header__->length--; \
+        __vector_resize((__vec_ptr__)); \
+    } while (0)
+#endif
 
 /**
  * PUBLIC
@@ -1326,7 +1418,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     #endif
 #endif
 
-#ifdef __cplusplus // C++ support
+#if LANGUAGE_CPP // C++ support
 }
 #endif // C++ support
 

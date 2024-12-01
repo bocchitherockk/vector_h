@@ -1,15 +1,15 @@
-# CC = gcc
-CC = g++
+CC = gcc
+# CC = g++
 
 CFLAGS = -Wall -g # -Wall flag is used to enable all warnings
 # LDFLAGS = -I../ -lvector -L../lib --static
 LDFLAGS = -I../ -lvector -L../lib -Wl,-rpath=../lib
 
-# files = "main.c"
+files = "main.c"
 # files = "costum free.c"
 # files = "initial capacity.c"
 # files = "costum optimal capacity.c"
-files = "test.cpp"
+# files = "test.cpp"
 
 verbose_mode = $(or $(verbose), $(v))
 

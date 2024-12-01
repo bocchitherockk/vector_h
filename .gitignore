@@ -1,6 +1,7 @@
 .vscode
 # added lib folder to keep it on my machine (i use it all the time), and not to push it to the repo
 lib
+object
 
 modules/*
 !modules/modules.json
