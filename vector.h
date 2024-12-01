@@ -4,7 +4,7 @@
 #if LANGUAGE_CPP // C++ support
 #warning c++ compilers do not automatically cast void* to other types, you have to cast the result of Vector_copy manually
 #warning example: int *result = (int*)Vector_copy(&vec1);
-extern "C" {
+extern "C" {    // prevent name mangling
 #endif // C++ support
 
 #include <stdlib.h>
@@ -29,219 +29,164 @@ typedef struct __Vector_Header {
 
 
 /**
- * INTERNAL
+ * Internal
  * 
- * returns the header of a vector
- * @param vec_ptr [T**] - a reference to the vector
- * @return [__Vector_Header*] - the header of the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * 
+ * Returns the header of a vector
+ * @param vec_ptr [T**]              - A reference to the vector
+ * @return        [__Vector_Header*] - The header of the vector
+ * @throw         [assert]           - If the reference to the vector is NULL
+ * @throw         [assert]           - If the vector is NULL
  */
 __Vector_Header *__get_vector_header(void *vec_ptr);
 
 /**
- * INTERNAL
+ * Internal
  * 
- * resizes the vector if the capacity is not optimal
- * @param vec_ptr [T**] - a reference to the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
+ * Resizes the vector if the capacity is not optimal
+ * @param vec_ptr [T**]    - A reference to the vector
+ * @throw         [assert] - If the reference to the vector is NULL
+ * @throw         [assert] - If the vector is NULL
  */
 void __vector_resize(void *vec_ptr);
 
 /**
- * INTERNAL
+ * Internal
  * 
- * initializes a vector
- * @param element_size [size_t] - the size of the vector type
- * @return [T*] - the array of data
- * @throw [assert] - if malloc fails
+ * Initializes a vector
+ * @param element_size [size_t] - The size of the vector type
+ * @return             [T*]     - The array of data
+ * @throw              [assert] - If malloc fails
  */
 void *__vector_init(size_t element_size);
 
 /**
- * PUBLIC
+ * Public
  * 
- * initializes a vector
- * @param __T__ [type] - the type of the vector
- * @return [T*] - the vector
- * @example
- * ```
- * int *vec = Vector_init(int);
- * ```
+ * Initializes a vector
+ * @param __T__ [type] - The type of the vector
+ * @return      [T*]   - The vector
  */
 #define Vector_init(__T__) (__T__*)__vector_init(sizeof(__T__))
 
 
 /**
- * PUBLIC
+ * Public
  * 
- * gets the size of an element in the vector
- * @param vec_ptr [T**] - a reference to the vector
- * @return [size_t] - the element size of the vector
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * size_t element_size = Vector_element_size(&vec); // should return sizeof(int)
- * ```
+ * Gets the size of an element in the vector
+ * @param vec_ptr [T**]    - A reference to the vector
+ * @return        [size_t] - The element size of the vector
+ * @throw         [assert] - If the reference to the vector is NULL
+ * @throw         [assert] - If the vector is NULL
  */
 size_t Vector_element_size(void *vec_ptr);
 
 /**
- * PUBLIC
+ * Public
  * 
- * returns the number of elements in a vector
- * @param vec_ptr [T**] - a reference to the vector
- * @return [size_t] - the number of elements in the vector
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * size_t length = Vector_length(&vec); // should return 0
- * ```
+ * Returns the number of elements in a vector
+ * @param vec_ptr [T**]    - A reference to the vector
+ * @return        [size_t] - The number of elements in the vector
+ * @throw         [assert] - If the reference to the vector is NULL
+ * @throw         [assert] - If the vector is NULL
  */
 size_t Vector_length(void *vec_ptr);
 
 /**
- * PUBLIC
+ * Public
  * 
- * returns the capacity of a vector
- * @param vec_ptr [T**] - a reference to the vector
- * @return [size_t] - the capacity of the vector
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * size_t capacity = Vector_capacity(&vec);
- * ```
+ * Returns the capacity of a vector
+ * @param vec_ptr [T**]    - A reference to the vector
+ * @return        [size_t] - The capacity of the vector
+ * @throw         [assert] - If the reference to the vector is NULL
+ * @throw         [assert] - If the vector is NULL
  */
 size_t Vector_capacity(void *vec_ptr);
 
 /**
- * PUBLIC
+ * Public
  * 
- * returns the initial capacity of a vector
- * @param vec_ptr [T**] - a reference to the vector
- * @return [size_t] - the initial capacity of the vector
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * size_t initial_capacity = Vector_initial_capacity(&vec);
- * ```
+ * Returns the initial capacity of a vector
+ * @param vec_ptr [T**]    - A reference to the vector
+ * @return        [size_t] - The initial capacity of the vector
+ * @throw         [assert] - If the reference to the vector is NULL
+ * @throw         [assert] - If the vector is NULL
  */
 size_t Vector_initial_capacity(void *vec_ptr);
 
 /**
- * PUBLIC
+ * Public
  * 
- * returns true if the capacity is all used up
- * @param vec_ptr [T**] - a reference to the vector
- * @return [bool] - true if the vector is full, false otherwise
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * bool is_full = Vector_is_full(&vec); // should return false
+ * Checks if the vector is full
+ * @param vec_ptr [T**]    - A reference to the vector
+ * @return        [bool]   - True if the vector is full, false otherwise
+ * @throw         [assert] - If the reference to the vector is NULL
+ * @throw         [assert] - If the vector is NULL
  */
 bool Vector_is_full(void *vec_ptr);
 
 /**
- * PUBLIC
+ * Public
  * 
- * returns true if the capacity is less than half full (there is a lot of unused space) and capacity > initial_capacity (the initial_capacity is the minimum capacity)
- * @param vec_ptr [T**] - a reference to the vector
- * @return [bool] - true if the vector is underfilled, false otherwise
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * bool is_underfilled = Vector_is_underfilled(&vec); // should return false
- * ```
+ * Returns true if the capacity is less than half full (there is a lot of unused space) and capacity > initial_capacity (the initial_capacity is the minimum capacity)
+ * @param vec_ptr [T**]    - A reference to the vector
+ * @return        [bool]   - True if the vector is underfilled, false otherwise
+ * @throw         [assert] - If the reference to the vector is NULL
+ * @throw         [assert] - If the vector is NULL
  */
 bool Vector_is_underfilled(void *vec_ptr);
 
 /**
- * PUBLIC
+ * Public
  * 
- * returns true if the vector is empty
- * @param vec_ptr [T**] - a reference to the vector
- * @return [bool] - true if the vector is empty, false otherwise
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * bool is_empty = Vector_is_empty(&vec); // should return true
- * ```
+ * Checks if the vector is empty
+ * @param vec_ptr [T**]    - A reference to the vector
+ * @return        [bool]   - True if the vector is empty, false otherwise
+ * @throw         [assert] - If the reference to the vector is NULL
+ * @throw         [assert] - If the vector is NULL
  */
 bool Vector_is_empty(void *vec_ptr);
 
 /**
- * PUBLIC
+ * Public
  * 
- * sets the free function of the vector
- * @param vec_ptr [T**] - a reference to the vector
+ * Sets the custom free function of the vector
+ * @param vec_ptr [T**]          - a reference to the vector
  * @param free_fn [void (*)(T*)] - the free function to free the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_set_free_fn(&vec, void (void *vec_ptr) => {
- *      printf("freeing the vector\n");
- *      free(__get_vector_header(vec_ptr));
- * });
- * ```
+ * @throw         [assert]       - if the reference to the vector is NULL
+ * @throw         [assert]       - if the vector is NULL
  */
 void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
 
 /**
- * PUBLIC
+ * Public
  * 
- * sets the initial capacity of the vector and resizes it immediately
- * the default initial capacity is 4
- * @param vec_ptr [T**] - a reference to the vector
- * @param initial_capacity [size_t] - the initial capacity of the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_set_initial_capacity(&vec, 10);
- * ```
+ * Sets the custom initial capacity of the vector and resizes it immediately
+ * The default initial capacity is 4
+ * @param vec_ptr          [T**]    - A reference to the vector
+ * @param initial_capacity [size_t] - The initial capacity of the vector
+ * @throw                  [assert] - If the reference to the vector is NULL
+ * @throw                  [assert] - If the vector is NULL
  */
 void Vector_set_initial_capacity(void *vec_ptr, size_t initial_capacity);
 
 /**
- * PUBLIC
+ * Public
  * 
- * sets the function that calculates the optimal capacity of the vector
- * @param vec_ptr [T**] - a reference to the vector
- * @param optimal_capacity_fn [size_t (*)(void*)] - the function that calculates the optimal capacity of the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_set_optimal_capacity_fn(&vec, costum_get_optimal_capacity);
- * ```
+ * Sets the custom function that calculates the optimal capacity of the vector
+ * @param vec_ptr             [T**]               - A reference to the vector
+ * @param optimal_capacity_fn [size_t (*)(void*)] - The function that calculates the optimal capacity of the vector
+ * @throw                     [assert]            - If the reference to the vector is NULL
+ * @throw                     [assert]            - If the vector is NULL
  */
 void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)(void *vec_ptr));
 
 /**
- * PUBLIC
+ * Public
  * 
- * destroys the vector
- * @param __vec_ptr__ [T**] - a reference to the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_destroy(&vec);
- * ```
+ * Destroys and frees the vector
+ * @param __vec_ptr__ [T**]    - A reference to the vector
+ * @throw             [assert] - If the reference to the vector is NULL
+ * @throw             [assert] - If the vector is NULL
  */
 #define Vector_destroy(__vec_ptr__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -254,26 +199,18 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     } \
 } while (0)
 
-/**
- * PUBLIC
- * 
- * gets the index of the value in the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @throw [assert] - if the value does not exist in the vector
- * @example
- * ```
- * int *vec = Vector_init(int);
- * size_t index = Vector_index(&vec, 5, boolean_comparator); // should throw an assert because the value is not found
- * ```
- */
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
-     * gets the index of the value in the vector
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __value__ [size_t] - the value to get the index of
-     * @param __boolean_comparator__ [int (*)(T, T)] - the boolean comparator function to compare the values (should return true if the values are equal, false otherwise), the first argument is the value in the vector, the second argument is the value given as an argument
-     * @return [size_t] - the index of the value in the vector
+     * Public
+     * 
+     * Gets the index of the value in the vector
+     * @param __vec_ptr__            [T**]           - A reference to the vector
+     * @param __value__              [size_t]        - The value to get the index of
+     * @param __boolean_comparator__ [int (*)(T, T)] - The boolean comparator function to compare the values (should return true if the values are equal, false otherwise), the first argument is the value in the vector, the second argument is the value given as an argument
+     * @return                       [size_t]        - The index of the value in the vector
+     * @throw                        [assert]        - If the reference to the vector is NULL
+     * @throw                        [assert]        - If the vector is NULL
+     * @throw                        [assert]        - If the value does not exist in the vector
      */
     #define Vector_index(__vec_ptr__, __value__, __boolean_comparator__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -290,11 +227,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     })
 #else
     /**
-     * gets the index of the value in the vector
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __value__ [size_t] - the value to get the index of
-     * @param __boolean_comparator__ [int (*)(T, T)] - the boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value given as an argument
-     * @param __result_ptr__ [size_t*] - a pointer to the variable to store the index in, if NULL, the result will not be stored but the function will execute normally
+     * Public
+     * 
+     * Gets the index of the value in the vector
+     * @param __vec_ptr__            [T**]           - A reference to the vector
+     * @param __value__              [size_t]        - The value to get the index of
+     * @param __boolean_comparator__ [int (*)(T, T)] - The boolean comparator function to compare the values (should return true if the values are equal, false otherwise), the first argument is the value in the vector, the second argument is the value given as an argument
+     * @param __result_ptr__         [size_t*]       - a pointer to the variable to store the index in, if NULL, the result will not be stored but the function will execute normally
+     * @throw                        [assert]        - If the reference to the vector is NULL
+     * @throw                        [assert]        - If the vector is NULL
+     * @throw                        [assert]        - If the value does not exist in the vector
      */
     #define Vector_index(__vec_ptr__, __value__, __boolean_comparator__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -311,25 +253,18 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     } while (0)
 #endif
 
-/**
- * PUBLIC
- * 
- * gets the count of the value in the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * size_t count = Vector_count(&vec, 5, boolean_comparator); // should return 0
- * ```
- */
+
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
-     * gets the count of the value in the vector
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __value__ [T] - the value to get the count of
+     * Public
+     * 
+     * Gets the count of the value in the vector
+     * @param __vec_ptr__            [T**]           - a reference to the vector
+     * @param __value__              [T]             - the value to get the count of
      * @param __boolean_comparator__ [int (*)(T, T)] - the boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value given as an argument
-     * @return [size_t] - the count of the value in the vector
+     * @return                       [size_t]        - the count of the value in the vector
+     * @throw                        [assert]        - if the reference to the vector is NULL
+     * @throw                        [assert]        - if the vector is NULL
      */
     #define Vector_count(__vec_ptr__, __value__, __boolean_comparator__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -343,11 +278,15 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     })
 #else
     /**
-     * gets the count of the value in the vector
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __value__ [T] - the value to get the count of
+     * Public
+     * 
+     * Gets the count of the value in the vector
+     * @param __vec_ptr__            [T**]           - a reference to the vector
+     * @param __value__              [T]             - the value to get the count of
      * @param __boolean_comparator__ [int (*)(T, T)] - the boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value given as an argument
-     * @param __result_ptr__ [size_t*] - a pointer to the variable to store the count in, if NULL, the result will not be stored but the function will execute normally
+     * @param __result_ptr__         [size_t*]       - a pointer to the variable to store the count in, if NULL, the result will not be stored but the function will execute normally
+     * @throw                        [assert]        - if the reference to the vector is NULL
+     * @throw                        [assert]        - if the vector is NULL
      */
     #define Vector_count(__vec_ptr__, __value__, __boolean_comparator__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -362,19 +301,14 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
 #endif
 
 /**
- * PUBLIC
+ * Public
  * 
- * pushes a value to the end of the vector
- * @param __vec_ptr__ [T**] - a reference to the vector
- * @param __value__ [T] - the value to push to the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @throw [assert] - if malloc fails
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_push(&vec, 1);
- * ```
+ * Pushes a value to the end of the vector
+ * @param __vec_ptr__ [T**]    - A reference to the vector
+ * @param __value__   [T]      - The value to push to the vector
+ * @throw             [assert] - If the reference to the vector is NULL
+ * @throw             [assert] - If the vector is NULL
+ * @throw             [assert] - If malloc fails
  */
 #define Vector_push(__vec_ptr__, __value__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -384,22 +318,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
 } while (0)
 
 /**
- * PUBLIC
+ * Public
  * 
- * inserts a value at the specified index in the vector
- * @param __vec_ptr__ [T**] - a reference to the vector
- * @param __index__ [size_t] - the index to insert the value at
- * @param __value__ [T] - the value to insert
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @throw [assert] - if the index is out of bounds
- * @throw [assert] - if malloc fails
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_push(&vec, 1);
- * Vector_insert_at(&vec, 0, 2); // should insert 2 at the beginning of the vector [ 2, 1 ]
- * ```
+ * Inserts a value at the specified index in the vector
+ * @param __vec_ptr__ [T**]    - A reference to the vector
+ * @param __index__   [size_t] - The index to insert the value at
+ * @param __value__   [T]      - The value to insert
+ * @throw             [assert] - If the reference to the vector is NULL
+ * @throw             [assert] - If the vector is NULL
+ * @throw             [assert] - If the index is out of bounds
+ * @throw             [assert] - If malloc fails
  */
 #define Vector_insert_at(__vec_ptr__, __index__, __value__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -411,27 +339,18 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     __header__->length++; \
 } while (0)
 
-/**
- * PUBLIC
- * 
- * inserts a value into the vector in sorted order
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @throw [assert] - if malloc fails
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_push(&vec, 1);
- * Vector_insert_sorted(&vec, 2, int_comparator); // should insert 2 at the end of the vector [ 1, 2 ]
- * ```
- */
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
-     * inserts a value into the vector in sorted order using binary search
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __value__ [T] - the value to insert
-     * @param __ordering_comparator__ [int (*)(T, T)] - the ordering comparator function to compare the values
-     * @return [size_t] - the index of the value inserted into the vector
+     * Public
+     * 
+     * Inserts a value into the vector in sorted order
+     * @param __vec_ptr__             [T**]           - A reference to the vector
+     * @param __value__               [T]             - The value to insert
+     * @param __ordering_comparator__ [int (*)(T, T)] - The ordering comparator function to compare the values
+     * @return                        [size_t]        - The index of the value inserted into the vector
+     * @throw                         [assert]        - If the reference to the vector is NULL
+     * @throw                         [assert]        - If the vector is NULL
+     * @throw                         [assert]        - If malloc fails
      */
     #define Vector_insert_sorted(__vec_ptr__, __value__, __ordering_comparator__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -452,11 +371,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     })
 #else
     /**
-     * inserts a value into the vector in sorted order using binary search
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __value__ [T] - the value to insert
-     * @param __ordering_comparator__ [int (*)(T, T)] - the ordering comparator function to compare the values
-     * @param __result_ptr__ [size_t*] - a pointer to the variable to store the new index of the inserted value in, if NULL, the result will not be stored but the function will execute normally
+     * Public
+     * 
+     * Inserts a value into the vector in sorted order
+     * @param __vec_ptr__             [T**]           - A reference to the vector
+     * @param __value__               [T]             - The value to insert
+     * @param __ordering_comparator__ [int (*)(T, T)] - The ordering comparator function to compare the values
+     * @param __result_ptr__          [size_t*]       - a pointer to the variable to store the index of the value inserted into the vector, if NULL, the result will not be stored but the function will execute normally
+     * @throw                         [assert]        - If the reference to the vector is NULL
+     * @throw                         [assert]        - If the vector is NULL
+     * @throw                         [assert]        - If malloc fails
      */
     #define Vector_insert_sorted(__vec_ptr__, __value__, __ordering_comparator__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -478,24 +402,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
 #endif
 
 /**
- * PUBLIC
+ * Public
  * 
- * appends the values of the second vector to the first vector
- * @param __vec_ptr1__ [T**] - a reference to the first vector
- * @param __vec_ptr2__ [T**] - a reference to the second vector
- * @throw [assert] - if the reference to the first vector is NULL
- * @throw [assert] - if the first vector is NULL
- * @throw [assert] - if the reference to the second vector is NULL
- * @throw [assert] - if the second vector is NULL
- * @throw [assert] - if malloc fails
- * @example
- * ```
- * int *vec1 = Vector_init(int);
- * int *vec2 = Vector_init(int);
- * Vector_push(&vec1, 1);
- * Vector_push(&vec2, 2);
- * Vector_concat(&vec1, &vec2); // should append 2 to the end of vec1
- * ```
+ * Appends a copy of the values in the second vector to the first vector
+ * @param __vec_ptr1__ [T**]    - A reference to the first vector
+ * @param __vec_ptr2__ [T**]    - A reference to the second vector
+ * @throw              [assert] - If the reference to the first vector is NULL
+ * @throw              [assert] - If the first vector is NULL
+ * @throw              [assert] - If the reference to the second vector is NULL
+ * @throw              [assert] - If the second vector is NULL
+ * @throw              [assert] - If malloc fails
  */
 #define Vector_concat(__vec_ptr1__, __vec_ptr2__) do { \
     assert(((__vec_ptr1__) != NULL) && ((*(__vec_ptr1__)) != NULL)); \
@@ -508,22 +424,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
 #if COMPILER_SUPPORTS_STATEMENT_EXPESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
         /**
-         * PUBLIC
+         * Public
          * 
-         * pops the last value from the vector
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @return [T] - the value popped from the vector
-         * @throw [assert] - if the vector is NULL
-         * @throw [assert] - if malloc fails
-         * @throw [assert] - if the vector is empty
-         * @example
-         * ```
-         * int *vec = Vector_init(int);
-         * Vector_push(&vec, 1);
-         * int value = Vector_pop(&vec); // should return 1
-         * ```
+         * Pops the last value from the vector and returns it
+         * @param __vec_ptr__ [T**]    - A reference to the vector
+         * @return            [T]      - The value popped from the vector
+         * @throw             [assert] - If the vector is NULL
+         * @throw             [assert] - If malloc fails
+         * @throw             [assert] - If the vector is empty
          */
-        #define Vector_pop(__vec_ptr__) (*(__vec_ptr__))[Vector_length((__vec_ptr__)) - 1]; do ({ \
+        #define Vector_pop(__vec_ptr__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
             assert(__header__->length > 0); \
@@ -533,6 +443,17 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             __value__; \
         })
     #else
+        /**
+         * Public
+         * 
+         * Pops the last value from the vector and returns it
+         * @param __vec_ptr__          [T**]    - A reference to the vector
+         * @param __vec_element_type__ [type]   - The type of the vector
+         * @return                     [T]      - The value popped from the vector
+         * @throw                      [assert] - If the vector is NULL
+         * @throw                      [assert] - If malloc fails
+         * @throw                      [assert] - If the vector is empty
+         */
         #define Vector_pop(__vec_ptr__, __vec_element_type__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
@@ -546,21 +467,15 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     #endif
 #else
     /**
-     * PUBLIC
+     * Public
      * 
-     * pops the last value from the vector
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __result_ptr__ [T*] - a pointer to the variable to store the popped value in, if NULL, the result will not be stored but the function will execute normally
-     * @throw [assert] - if the vector is NULL
-     * @throw [assert] - if malloc fails
-     * @throw [assert] - if the vector is empty
-     * @example
-     * ```
-     * int *vec = Vector_init(int);
-     * Vector_push(&vec, 1);
-     * int value;
-     * Vector_pop(&vec, &value); // should return 1
-     * ```
+     * Pops the last value from the vector and returns it
+     * @param __vec_ptr__    [T**]    - A reference to the vector
+     * @param __result_ptr__ [T*]     - A pointer to the variable to store the popped value in, if NULL, the result will not be stored but the function will execute normally
+     * @return               [T]      - The value popped from the vector
+     * @throw                [assert] - If the vector is NULL
+     * @throw                [assert] - If malloc fails
+     * @throw                [assert] - If the vector is empty
      */
     #define Vector_pop(__vec_ptr__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -577,21 +492,15 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
         /**
-         * PUBLIC
+         * Public
          * 
-         * removes the value at the specified index from the vector
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __index__ [size_t] - the index to remove the value from
-         * @return [T] - the value removed from the vector
-         * @throw [assert] - if the vector is NULL
-         * @throw [assert] - if malloc fails
-         * @throw [assert] - if the index is out of bounds
-         * @example
-         * ```
-         * int *vec = Vector_init(int);
-         * Vector_push(&vec, 1);
-         * Vector_remove_at(&vec, 0); // should remove 1 from the vector
-         * ```
+         * Removes the value at the specified index from the vector
+         * @param __vec_ptr__ [T**]    - A reference to the vector
+         * @param __index__   [size_t] - The index to remove the value from
+         * @return            [T]      - The value removed from the vector
+         * @throw             [assert] - If the vector is NULL
+         * @throw             [assert] - If malloc fails
+         * @throw             [assert] - If the index is out of bounds
          */
         #define Vector_remove_at(__vec_ptr__, __index__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -604,6 +513,18 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             __value__; \
         })
     #else
+        /**
+         * Public
+         * 
+         * Removes the value at the specified index from the vector
+         * @param __vec_ptr__          [T**]    - A reference to the vector
+         * @param __index__            [size_t] - The index to remove the value from
+         * @param __vec_element_type__ [type]   - The type of the vector
+         * @return                     [T]      - The value removed from the vector
+         * @throw                      [assert] - If the vector is NULL
+         * @throw                      [assert] - If malloc fails
+         * @throw                      [assert] - If the index is out of bounds
+         */
         #define Vector_remove_at(__vec_ptr__, __index__, __vec_element_type__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
@@ -618,22 +539,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     #endif
 #else
     /**
-     * PUBLIC
+     * Public
      * 
-     * removes the value at the specified index from the vector
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __index__ [size_t] - the index to remove the value from
-     * @param __result_ptr__ [T*] - a pointer to the variable to store the removed value in, if NULL, the result will not be stored but the function will execute normally
-     * @throw [assert] - if the vector is NULL
-     * @throw [assert] - if malloc fails
-     * @throw [assert] - if the index is out of bounds
-     * @example
-     * ```
-     * int *vec = Vector_init(int);
-     * Vector_push(&vec, 1);
-     * int value;
-     * Vector_remove_at(&vec, 0, &value); // should remove 1 from the vector
-     * ```
+     * Removes the value at the specified index from the vector
+     * @param __vec_ptr__    [T**]    - A reference to the vector
+     * @param __index__      [size_t] - The index to remove the value from
+     * @param __result_ptr__ [T*]     - A pointer to the variable to store the removed value in, if NULL, the result will not be stored but the function will execute normally
+     * @return               [T]      - The value removed from the vector
+     * @throw                [assert] - If the vector is NULL
+     * @throw                [assert] - If malloc fails
+     * @throw                [assert] - If the index is out of bounds
      */
     #define Vector_remove_at(__vec_ptr__, __index__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -648,28 +563,19 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     } while (0)
 #endif
 
-/**
- * PUBLIC
- * 
- * removes the first occurrence of the value from the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @throw [assert] - if malloc fails
- * @throw [assert] - if the value does not exist in the vector
- * @example
- * ```
- * int *vec = Vector_init(int);
- * for (int i = 0; i < 10; i++) { Vector_push(&vec, i); }
- * size_t index = Vector_remove_value(&vec, 5, boolean_comparator); // should remove 5 from the vector
- * ```
- */
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
-     * removes the first occurrence of the value from the vector
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __value__ [T] - the value to remove
-     * @param __boolean_comparator__ [int (*)(T, T)] - the boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value to search for
-     * @return [size_t] - the index of the value removed from the vector
+     * Public
+     * 
+     * Removes the first occurrence of the value from the vector
+     * @param __vec_ptr__            [T**]           - A reference to the vector
+     * @param __value__              [T]             - The value to remove
+     * @param __boolean_comparator__ [int (*)(T, T)] - The boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value to search for
+     * @return                       [size_t]        - The index of the value removed from the vector
+     * @throw                        [assert]        - If the reference to the vector is NULL
+     * @throw                        [assert]        - If the vector is NULL
+     * @throw                        [assert]        - If malloc fails
+     * @throw                        [assert]        - If the value does not exist in the vector
      */
     #define Vector_remove_value(__vec_ptr__, __value__, __boolean_comparator__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -679,11 +585,17 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     })
 #else
     /**
-     * removes the first occurrence of the value from the vector
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __value__ [T] - the value to remove
-     * @param __boolean_comparator__ [int (*)(T, T)] - the boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value to search for
-     * @param __result_ptr__ [size_t*] - a pointer to the variable to store the index of the removed value before removing it, if NULL, the result will not be stored but the function will execute normally
+     * Public
+     * 
+     * Removes the first occurrence of the value from the vector
+     * @param __vec_ptr__            [T**]           - A reference to the vector
+     * @param __value__              [T]             - The value to remove
+     * @param __boolean_comparator__ [int (*)(T, T)] - The boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value to search for
+     * @param __result_ptr__         [size_t*]       - A pointer to the variable to store the index of the value removed from the vector, if NULL, the result will not be stored but the function will execute normally
+     * @throw                        [assert]        - If the reference to the vector is NULL
+     * @throw                        [assert]        - If the vector is NULL
+     * @throw                        [assert]        - If malloc fails
+     * @throw                        [assert]        - If the value does not exist in the vector
      */
     #define Vector_remove_value(__vec_ptr__, __value__, __boolean_comparator__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -696,18 +608,12 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
 
 
 /**
- * PUBLIC
+ * Public
  * 
- * clears the vector
- * @param __vec_ptr__ [T**] - a reference to the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_push(&vec, 1); // [ 1 ]
- * Vector_clear(&vec); // should clear the vector [ ]
- * ```
+ * Clears all the elements in the vector
+ * @param __vec_ptr__ [T**]    - A reference to the vector
+ * @throw             [assert] - If the reference to the vector is NULL
+ * @throw             [assert] - If the vector is NULL
  */
 #define Vector_clear(__vec_ptr__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -716,26 +622,19 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     __vector_resize((__vec_ptr__)); \
 } while (0)
 
-/**
- * PUBLIC
- * 
- * copies the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @throw [assert] - if malloc fails
- * @note the returned result is a shallow copy, if the vector contains pointers to objects, the objects will not be copied
- * @example
- * ```
- * int *vec = Vector_init(int);
- * int *vec_copy = Vector_copy(&vec); // should create a copy of the vector
- * ```
- */
+
 // the result is casted to void* to avoid the casting warning
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
-     * copies the vector
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @return [T*] - the copied vector
+     * Public
+     * 
+     * Returns a shallow copy of the vector
+     * @param __vec_ptr__ [T**]    - A reference to the vector
+     * @return            [T*]     - The copied vector
+     * @throw             [assert] - If the reference to the vector is NULL
+     * @throw             [assert] - If the vector is NULL
+     * @throw             [assert] - If malloc fails
+     * @note the returned result is a shallow copy, if the vector contains pointers to objects, the objects will not be copied
      */
     #define Vector_copy(__vec_ptr__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -747,10 +646,15 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     })
 #else
     /**
-     * copies the vector
-     * @param __old_vec_ptr__ [T**] - a reference to the vector
-     * @param __new_vec_ptr__ [T**] - a reference to the pointer to the new vector
-     * @throw [assert] - if the reference to the new vector is NULL
+     * Public
+     * 
+     * Returns a shallow copy of the vector
+     * @param __old_vec_ptr__ [T**]    - A reference to the vector
+     * @param __new_vec_ptr__ [T**]    - A reference to the copied vector
+     * @throw                 [assert] - If the reference to the vector is NULL
+     * @throw                 [assert] - If the vector is NULL
+     * @throw                 [assert] - If malloc fails
+     * @note the returned result is a shallow copy, if the vector contains pointers to objects, the objects will not be copied
      */
     #define Vector_copy(__old_vec_ptr__, __new_vec_ptr__) do { \
         assert(((__old_vec_ptr__) != NULL) && ((*(__old_vec_ptr__)) != NULL)); \
@@ -764,63 +668,26 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
 #endif
 
 /**
- * PUBLIC
+ * Public
  * 
- * reverses the vector in place
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_reverse(&vec); // should reverse the vector
- * ```
+ * Reverses the vector in place
+ * @param __vec_ptr__ [T**]    - A reference to the vector
+ * @throw             [assert] - If the reference to the vector is NULL
+ * @throw             [assert] - If the vector is NULL
  */
-#if COMPILER_SUPPORTS_TYPEOF
-    /**
-     * reverses the vector in place
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     */
-    #define Vector_reverse(__vec_ptr__) do { \
-        assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
-        for (size_t __i__ = 0; __i__ < __header__->length / 2; __i__++) { \
-            typeof(**(__vec_ptr__)) __temp__ = (*(__vec_ptr__))[__i__]; \
-            (*(__vec_ptr__))[__i__] = (*(__vec_ptr__))[__header__->length - __i__ - 1]; \
-            (*(__vec_ptr__))[__header__->length - __i__ - 1] = __temp__; \
-        } \
-    } while (0)
-#else
-    /**
-     * reverses the vector in place
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     */
-    #define Vector_reverse(__vec_ptr__) do { \
-        assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
-        void *__temp__ = malloc(__header__->element_size); \
-        assert(__temp__ != NULL); \
-        for (size_t __i__ = 0; __i__ < __header__->length / 2; __i__++) { \
-            memcpy(__temp__, (*(__vec_ptr__)) + __i__, __header__->element_size); \
-            memcpy((*(__vec_ptr__)) + __i__, (*(__vec_ptr__)) + (__header__->length - __i__ - 1), __header__->element_size); \
-            memcpy((*(__vec_ptr__)) + (__header__->length - __i__ - 1), __temp__, __header__->element_size); \
-        } \
-        free(__temp__); \
-    } while (0)
-#endif
+#define Vector_reverse(__vec_ptr__) do { \
+    assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
+    __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+    void *__temp__ = malloc(__header__->element_size); \
+    assert(__temp__ != NULL); \
+    for (size_t __i__ = 0; __i__ < __header__->length / 2; __i__++) { \
+        memcpy(__temp__, (*(__vec_ptr__)) + __i__, __header__->element_size); \
+        memcpy((*(__vec_ptr__)) + __i__, (*(__vec_ptr__)) + (__header__->length - __i__ - 1), __header__->element_size); \
+        memcpy((*(__vec_ptr__)) + (__header__->length - __i__ - 1), __temp__, __header__->element_size); \
+    } \
+    free(__temp__); \
+} while (0)
 
-/**
- * PUBLIC
- * 
- * sorts the vector in place
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * 
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_sort(&vec, int_comparator); // should sort the vector
- * ```
- */
 #if COMPILER_SUPPORTS_TYPEOF
     #define __merge__(__arr__, __left_size__, __mid__, __right_size__, __ordering_comparator__) do { \
         int __i__, __j__, __k__; \
@@ -862,10 +729,15 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             } \
         } \
     } while(0)
+
     /**
-     * sorts the vector in place
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __ordering_comparator__ [int (*)(T, T)] - the ordering comparator function to compare the values, should return a positive number if the first value is greater than the second value, a negative number if the first value is less than the second value, and 0 if the values are equal
+     * Public
+     * 
+     * Sorts the vector in place
+     * @param __vec_ptr__             [T**]           - A reference to the vector
+     * @param __ordering_comparator__ [int (*)(T, T)] - The ordering comparator function to compare the values, should return a positive number if the first value is greater than the second value, a negative number if the first value is less than the second value, and 0 if the values are equal
+     * @throw                         [assert]        - If the reference to the vector is NULL
+     * @throw                         [assert]        - If the vector is NULL
      */
     #define Vector_sort(__vec_ptr__, __ordering_comparator__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -873,11 +745,6 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         __merge_sort__((*(__vec_ptr__)), __header__->length, (__ordering_comparator__)); \
     } while (0)
 #else
-    /**
-     * sorts the vector in place
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __ordering_comparator__ [int (*)(T, T)] - the ordering comparator function to compare the values, should return a positive number if the first value is greater than the second value, a negative number if the first value is less than the second value, and 0 if the values are equal
-     */
     #define __merge__(__arr__, __left_size__, __mid__, __right_size__, __ordering_comparator__, __vec_element_type__) do { \
         int __i__, __j__, __k__; \
         int __n1__ = (__mid__) - (__left_size__) + 1; \
@@ -918,10 +785,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             } \
         } \
     } while(0)
+
     /**
-     * sorts the vector in place
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __ordering_comparator__ [int (*)(T, T)] - the ordering comparator function to compare the values, should return a positive number if the first value is greater than the second value, a negative number if the first value is less than the second value, and 0 if the values are equal
+     * Public
+     * 
+     * Sorts the vector in place
+     * @param __vec_ptr__             [T**]           - A reference to the vector
+     * @param __ordering_comparator__ [int (*)(T, T)] - The ordering comparator function to compare the values, should return a positive number if the first value is greater than the second value, a negative number if the first value is less than the second value, and 0 if the values are equal
+     * @param __vec_element_type__    [type]          - The type of the elements in the vector
+     * @throw                         [assert]        - If the reference to the vector is NULL
+     * @throw                         [assert]        - If the vector is NULL
      */
     #define Vector_sort(__vec_ptr__, __ordering_comparator__, __vec_element_type__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -930,26 +803,18 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     } while (0)
 #endif
 
-/**
- * PUBLIC
- * 
- * filters the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @throw [assert] - if malloc fails
- * @example
- * ```
- * int *vec = Vector_init(int);
- * int *filtered_vec = Vector_filter(&vec, filter_function); // should return a filtered vector
- * ```
- */
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
         /**
-         * filters the vector
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __filter__ [bool (*)(T)] - the filter function to filter the values
-         * @return [T*] - a new filtered vector
+         * Public
+         * 
+         * Filters the vector based on a filter function
+         * @param __vec_ptr__ [T**]         - A reference to the vector
+         * @param __filter__  [bool (*)(T)] - The filter function to filter the values
+         * @return            [T*]          - A new filtered vector
+         * @throw             [assert]      - If the reference to the vector is NULL
+         * @throw             [assert]      - If the vector is NULL
+         * @throw             [assert]      - If malloc fails
          */
         #define Vector_filter(__vec_ptr__, __filter__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -963,11 +828,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         })
     #else
         /**
-         * filters the vector
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __filter__ [bool (*)(T)] - the filter function to filter the values
-         * @param __vec_element_type__ [T] - the type of the elements of the returned vector
-         * @return [T*] - a new filtered vector
+         * Public
+         * 
+         * Filters the vector based on a filter function
+         * @param __vec_ptr__          [T**]         - A reference to the vector
+         * @param __filter__           [bool (*)(T)] - The filter function to filter the values
+         * @param __vec_element_type__ [type]        - The type of the elements of the returned vector
+         * @return                     [T*]          - A new filtered vector
+         * @throw                      [assert]      - If the reference to the vector is NULL
+         * @throw                      [assert]      - If the vector is NULL
+         * @throw                      [assert]      - If malloc fails
          */
         #define Vector_filter(__vec_ptr__, __filter__, __vec_element_type__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -983,11 +853,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
 #else
     #if COMPILER_SUPPORTS_TYPEOF
         /**
-         * filters the vector
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __filter__ [bool (*)(T)] - the filter function to filter the values
-         * @param __new_vec_ptr__ [T**] - a reference to the pointer to the new vector
-         * @throw [assert] - if the reference to the new vector is NULL
+         * Public
+         * 
+         * Filters the vector based on a filter function
+         * @param __vec_ptr__     [T**]         - A reference to the vector
+         * @param __filter__      [bool (*)(T)] - The filter function to filter the values
+         * @param __new_vec_ptr__ [T**]     - A reference to the pointer to the new vector
+         * @throw                 [assert]      - If the reference to the vector is NULL
+         * @throw                 [assert]      - If the vector is NULL
+         * @throw                 [assert]      - If the reference to the new vector is NULL
+         * @throw                 [assert]      - If malloc fails
          */
         #define Vector_filter(__vec_ptr__, __filter__, __new_vec_ptr__) do { \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1001,12 +876,17 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         } while (0)
     #else
         /**
-         * filters the vector
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __filter__ [bool (*)(T)] - the filter function to filter the values
-         * @param __new_vec_ptr__ [T**] - a reference to the pointer to the new vector
-         * @param __vec_element_type__ [T] - the type of the elements of the returned vector
-         * @throw [assert] - if the reference to the new vector is NULL
+         * Public
+         * 
+         * Filters the vector based on a filter function
+         * @param __vec_ptr__          [T**]         - A reference to the vector
+         * @param __filter__           [bool (*)(T)] - The filter function to filter the values
+         * @param __new_vec_ptr__      [T**]         - A reference to the pointer to the new vector
+         * @param __vec_element_type__ [type]        - The type of the elements of the returned vector
+         * @throw                      [assert]      - If the reference to the vector is NULL
+         * @throw                      [assert]      - If the vector is NULL
+         * @throw                      [assert]      - If the reference to the new vector is NULL
+         * @throw                      [assert]      - If malloc fails
          */
         #define Vector_filter(__vec_ptr__, __filter__, __new_vec_ptr__, __vec_element_type__) do { \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1022,18 +902,13 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
 #endif
 
 /**
- * PUBLIC
+ * Public
  * 
- * applies a function to each value in the vector
- * @param __vec_ptr__ [T**] - a reference to the vector
- * @param __func__ [void (*)(T*)] - the function to apply to each value, it takes a pointer to the value
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * Vector_foreach(&vec, for_each_function); // should print each value in the vector
- * ```
+ * Applies a function to each value in the vector
+ * @param __vec_ptr__ [T**]          - A reference to the vector
+ * @param __func__    [void (*)(T*)] - The function to apply to each value, it takes a pointer to the value
+ * @throw             [assert]       - If the reference to the vector is NULL
+ * @throw             [assert]       - If the vector is NULL
  */
 #define Vector_foreach(__vec_ptr__, __func__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1042,26 +917,18 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     } \
 } while (0)
 
-/**
- * PUBLIC
- * 
- * maps a function to each value in the vector
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @throw [assert] - if malloc fails
- * @example
- * ```
- * int *vec = Vector_init(int);
- * int *vec_mapped = Vector_map(&vec, map_function); // should map each value in the vector
- * ```
- */
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
         /**
-         * maps a function to each value in the vector
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __mapper__ [T (*)(T)] - the mapper function to map to each value
-         * @return [T*] - a new mapped vector
+         * Public
+         * 
+         * Maps a function to each value in the vector and returns a new vector
+         * @param __vec_ptr__ [T**]      - A reference to the vector
+         * @param __mapper__  [T (*)(T)] - The mapper function to map to each value
+         * @return            [T*]       - A new mapped vector
+         * @throw             [assert]   - If the reference to the vector is NULL
+         * @throw             [assert]   - If the vector is NULL
+         * @throw             [assert]   - If malloc fails
          */
         #define Vector_map(__vec_ptr__, __mapper__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1073,11 +940,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         })
     #else
         /**
-         * maps a function to each value in the vector
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __mapper__ [T (*)(T)] - the mapper function to map to each value
-         * @param __vec_element_type__ [T] - the type of the elements of the returned vector
-         * @return [T*] - a new mapped vector
+         * Public
+         * 
+         * Maps a function to each value in the vector and returns a new vector
+         * @param __vec_ptr__          [T**]      - A reference to the vector
+         * @param __mapper__           [T (*)(T)] - The mapper function to map to each value
+         * @param __vec_element_type__ [type]     - The type of the elements of the returned vector
+         * @return                     [T*]       - A new mapped vector
+         * @throw                      [assert]   - If the reference to the vector is NULL
+         * @throw                      [assert]   - If the vector is NULL
+         * @throw                      [assert]   - If malloc fails
          */
         #define Vector_map(__vec_ptr__, __mapper__, __vec_element_type__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1091,11 +963,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
 #else
     #if COMPILER_SUPPORTS_TYPEOF
         /**
-         * maps a function to each value in the vector
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __mapper__ [T (*)(T)] - the mapper function to map to each value
-         * @param __new_vec_ptr__ [T**] - a reference to the new vector
-         * @throw [assert] - if the reference to the new vector is NULL
+         * Public
+         * 
+         * Maps a function to each value in the vector and returns a new vector
+         * @param __vec_ptr__     [T**]      - A reference to the vector
+         * @param __mapper__      [T (*)(T)] - The mapper function to map to each value
+         * @param __new_vec_ptr__ [T**]      - A reference to the new vector
+         * @throw                 [assert]   - If the reference to the vector is NULL
+         * @throw                 [assert]   - If the vector is NULL
+         * @throw                 [assert]   - If the reference to the new vector is NULL
+         * @throw                 [assert]   - If malloc fails
          */
         #define Vector_map(__vec_ptr__, __mapper__, __new_vec_ptr__) do { \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1107,12 +984,17 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         } while (0)
     #else
         /**
-         * maps a function to each value in the vector
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __mapper__ [T (*)(T)] - the mapper function to map to each value
-         * @param __new_vec_ptr__ [T**] - a reference to the new vector
-         * @param __vec_element_type__ [T] - the type of the elements of the returned vector
-         * @throw [assert] - if the reference to the new vector is NULL
+         * Public
+         * 
+         * Maps a function to each value in the vector and returns a new vector
+         * @param __vec_ptr__          [T**]      - A reference to the vector
+         * @param __mapper__           [T (*)(T)] - The mapper function to map to each value
+         * @param __new_vec_ptr__      [T**]      - A reference to the new vector
+         * @param __vec_element_type__ [type]     - The type of the elements of the returned vector
+         * @throw                      [assert]   - If the reference to the vector is NULL
+         * @throw                      [assert]   - If the vector is NULL
+         * @throw                      [assert]   - If the reference to the new vector is NULL
+         * @throw                      [assert]   - If malloc fails
          */
         #define Vector_map(__vec_ptr__, __mapper__, __new_vec_ptr__, __vec_element_type__) do { \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1125,27 +1007,18 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     #endif
 #endif
 
-/**
- * PUBLIC
- * 
- * reduces the vector to a single value
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * int sum = Vector_reduce(&vec, lambda(int, (int acc, int x), { return acc + x; }), 0); // should reduce the vector
- * Vector_destroy(&vec);
- * ```
- */
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
         /**
-         * reduces the vector to a single value
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __reducer__ [T (*)(T, T)] - the reducer function to reduce the values
-         * @param __initial_value__ [T] - the initial value to start the reduction
-         * @return [T] - the reduced value
+         * Public
+         * 
+         * Reduces the vector to a single value
+         * @param __vec_ptr__       [T**]         - A reference to the vector
+         * @param __reducer__       [U (*)(U, T)] - The reducer function to reduce the values
+         * @param __initial_value__ [U]           - The initial value to start the reduction
+         * @return                  [U]           - The reduced value
+         * @throw                   [assert]      - If the reference to the vector is NULL
+         * @throw                   [assert]      - If the vector is NULL
          */
         #define Vector_reduce(__vec_ptr__, __reducer__, __initial_value__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1157,11 +1030,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         })
     #else
         /**
-         * reduces the vector to a single value
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __reducer__ [T (*)(T, T)] - the reducer function to reduce the values
-         * @param __initial_value__ [T] - the initial value to start the reduction
-         * @param __accumulator_type__ [T] - the type of the accumulator
+         * Public
+         * 
+         * Reduces the vector to a single value
+         * @param __vec_ptr__          [T**]         - A reference to the vector
+         * @param __reducer__          [T (*)(U, T)] - The reducer function to reduce the values
+         * @param __initial_value__    [U]           - The initial value to start the reduction
+         * @param __accumulator_type__ [type]        - The type of the accumulator
+         * @return                     [U]           - The reduced value
+         * @throw                      [assert]      - If the reference to the vector is NULL
+         * @throw                      [assert]      - If the vector is NULL
          */
         #define Vector_reduce(__vec_ptr__, __reducer__, __initial_value__, __accumulator_type__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1175,11 +1053,15 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
 #else
     #if COMPILER_SUPPORTS_TYPEOF
         /**
-         * reduces the vector to a single value
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __reducer__ [T (*)(T, T)] - the reducer function to reduce the values
-         * @param __initial_value__ [T] - the initial value to start the reduction
-         * @param __result_ptr__ [T*] - a reference to the variable to store the reduced value, if NULL, the result will not be stored but the function will execute normally
+         * Public
+         * 
+         * Reduces the vector to a single value
+         * @param __vec_ptr__       [T**]         - A reference to the vector
+         * @param __reducer__       [T (*)(U, T)] - The reducer function to reduce the values
+         * @param __initial_value__ [U]           - The initial value to start the reduction
+         * @param __result_ptr__    [U*]          - A reference to the variable to store the result in, if NULL, the result will not be stored but the function will execute normally
+         * @throw                   [assert]      - If the reference to the vector is NULL
+         * @throw                   [assert]      - If the vector is NULL
          */
         #define Vector_reduce(__vec_ptr__, __reducer__, __initial_value__, __result_ptr__) do { \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1191,12 +1073,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         } while (0)
     #else
         /**
-         * reduces the vector to a single value
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __reducer__ [T (*)(T, T)] - the reducer function to reduce the values
-         * @param __initial_value__ [T] - the initial value to start the reduction
-         * @param __result_ptr__ [T*] - a reference to the variable to store the result in, if NULL, the result will not be stored but the function will execute normally
-         * @param __accumulator_type__ [T] - the type of the accumulator
+         * Public
+         * 
+         * Reduces the vector to a single value
+         * @param __vec_ptr__          [T**]         - A reference to the vector
+         * @param __reducer__          [T (*)(U, T)] - The reducer function to reduce the values
+         * @param __initial_value__    [U]           - The initial value to start the reduction
+         * @param __result_ptr__       [U*]          - A reference to the variable to store the result in, if NULL, the result will not be stored but the function will execute normally
+         * @param __accumulator_type__ [type]        - The type of the accumulator
+         * @throw                      [assert]      - If the reference to the vector is NULL
+         * @throw                      [assert]      - If the vector is NULL
          */
         #define Vector_reduce(__vec_ptr__, __reducer__, __initial_value__, __result_ptr__, __accumulator_type__) do { \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1209,24 +1095,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     #endif
 #endif
 
-/**
- * PUBLIC
- * 
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @note requires a compiler that supports 'typeof' and 'statement expressions'
- * @example
- * ```
- * int *vec = Vector_init(int);
- * bool any = Vector_any(&vec, lambda(bool, (int x), { return x == 5; })); // should return true
- * ```
- */
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
-     * checks if any value in the vector satisfies the function
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __func__ [bool (*)(T)] - the function to check if any value satisfies
-     * @return [bool] - true if any value satisfies the function, false otherwise
+     * Public
+     * 
+     * Checks if any value in the vector satisfies the function
+     * @param __vec_ptr__ [T**]         - A reference to the vector
+     * @param __func__    [bool (*)(T)] - The function to check if any value satisfies
+     * @return            [bool]        - True if any value satisfies the function, false otherwise
+     * @throw             [assert]      - If the reference to the vector is NULL
+     * @throw             [assert]      - If the vector is NULL
      */
     #define Vector_any(__vec_ptr__, __func__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1241,10 +1119,14 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     })
 #else
     /**
-     * checks if any value in the vector satisfies the function
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __func__ [bool (*)(T)] - the function to check if any value satisfies
-     * @param __result_ptr__ [bool*] - a reference to the variable to store the result in, if NULL, the result will not be stored but the function will execute normally
+     * Public
+     * 
+     * Checks if any value in the vector satisfies the function
+     * @param __vec_ptr__    [T**]         - A reference to the vector
+     * @param __func__       [bool (*)(T)] - The function to check if any value satisfies
+     * @param __result_ptr__ [bool*]       - A reference to the variable to store the result in, if NULL, the result will not be stored but the function will execute normally
+     * @throw                [assert]      - If the reference to the vector is NULL
+     * @throw                [assert]      - If the vector is NULL
      */
     #define Vector_any(__vec_ptr__, __func__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1259,25 +1141,16 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     } while (0)
 #endif
 
-/**
- * PUBLIC
- * 
- * returns true if all values in the vector satisfy the function
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @example
- * ```
- * int *vec = Vector_init(int);
- * bool all = Vector_all(&vec, lambda(bool, (int x), { return x < 10; })); // should return true
- * Vector_destroy(&vec);
- * ```
- */
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
-     * checks if all values in the vector satisfy the function
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __func__ [bool (*)(T)] - the function to check if all values satisfy
-     * @return [bool] - true if all values satisfy the function, false otherwise
+     * Public
+     * 
+     * Checks if all values in the vector satisfy the function
+     * @param __vec_ptr__ [T**]         - A reference to the vector
+     * @param __func__    [bool (*)(T)] - The function to check if all values satisfy
+     * @return            [bool]        - True if all values satisfy the function, false otherwise
+     * @throw             [assert]      - If the reference to the vector is NULL
+     * @throw             [assert]      - If the vector is NULL
      */
     #define Vector_all(__vec_ptr__, __func__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1292,10 +1165,14 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     })
 #else
     /**
-     * checks if all values in the vector satisfy the function
-     * @param __vec_ptr__ [T**] - a reference to the vector
-     * @param __func__ [bool (*)(T)] - the function to check if all values satisfy
-     * @param __result_ptr__ [bool*] - a reference to the variable to store the result in, if NULL, the result will not be stored but the function will execute normally
+     * Public
+     * 
+     * Checks if all values in the vector satisfy the function
+     * @param __vec_ptr__    [T**]         - A reference to the vector
+     * @param __func__       [bool (*)(T)] - The function to check if all values satisfy
+     * @param __result_ptr__ [bool*]       - A reference to the variable to store the result in, if NULL, the result will not be stored but the function will execute normally
+     * @throw                [assert]      - If the reference to the vector is NULL
+     * @throw                [assert]      - If the vector is NULL
      */
     #define Vector_all(__vec_ptr__, __func__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1310,30 +1187,22 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     } while (0)
 #endif
 
-/**
- * PUBLIC
- * 
- * returns a slice of the vector from the start index to the end index with the specified step
- * @throw [assert] - if the reference to the vector is NULL
- * @throw [assert] - if the vector is NULL
- * @throw [assert] - if the start index is out of bounds
- * @throw [assert] - if the end index is out of bounds
- * @throw [assert] - if the step is less than or equal to 0
- * @example
- * ```
- * int *vec = Vector_init(int);
- * int *vec_sliced = Vector_slice(&vec, 0, 10, 2); // should throw an assert because 10 is out of bounds
- * ```
- */
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
         /**
-         * returns a slice of the vector from the start index to the end index with the specified step
-         * @param __vec_ptr__ [T**] - a reference to the vector
-         * @param __start__ [size_t] - the start index of the slice
-         * @param __end__ [size_t] - the end index of the slice
-         * @param __step__ [size_t] - the step of the slice
-         * @return [T*] - the sliced vector
+         * Public
+         * 
+         * Returns a slice of the vector from the start index to the end index with the specified step
+         * @param __vec_ptr__ [T**]    - A reference to the vector
+         * @param __start__   [size_t] - The start index of the slice
+         * @param __end__     [size_t] - The end index of the slice
+         * @param __step__    [size_t] - The step of the slice
+         * @return            [T*]     - The sliced vector
+         * @throw             [assert] - If the reference to the vector is NULL
+         * @throw             [assert] - If the vector is NULL
+         * @throw             [assert] - If the start index is out of bounds
+         * @throw             [assert] - If the end index is out of bounds
+         * @throw             [assert] - If the step is less than or equal to 0
          */
         #define Vector_slice(__vec_ptr__, __start__, __end__, __step__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1349,12 +1218,20 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         })
     #else
         /**
-         * returns a slice of the vector from the start index to the end index with the specified step
-         * @param __vec_ptr__ [T**] - the pointer to the vector
-         * @param __start__ [size_t] - the start index of the slice
-         * @param __end__ [size_t] - the end index of the slice
-         * @param __step__ [size_t] - the step of the slice
-         * @param __vec_element_type__ [T] - the type of the elements of the returned vector
+         * Public
+         * 
+         * Returns a slice of the vector from the start index to the end index with the specified step
+         * @param __vec_ptr__          [T**]         - A reference to the vector
+         * @param __start__            [size_t]      - The start index of the slice
+         * @param __end__              [size_t]      - The end index of the slice
+         * @param __step__             [size_t]      - The step of the slice
+         * @param __vec_element_type__ [type]        - The type of the elements of the returned vector
+         * @return                     [T*]          - The sliced vector
+         * @throw                      [assert]      - If the reference to the vector is NULL
+         * @throw                      [assert]      - If the vector is NULL
+         * @throw                      [assert]      - If the start index is out of bounds
+         * @throw                      [assert]      - If the end index is out of bounds
+         * @throw                      [assert]      - If the step is less than or equal to 0
          */
         #define Vector_slice(__vec_ptr__, __start__, __end__, __step__, __vec_element_type__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -1370,16 +1247,23 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         })
     #endif
 #else
-    /**
-     * returns a slice of the vector from the start index to the end index with the specified step
-     * @param __vec_ptr__ [T**] - the pointer to the vector
-     * @param __start__ [size_t] - the start index of the slice
-     * @param __end__ [size_t] - the end index of the slice
-     * @param __step__ [size_t] - the step of the slice
-     * @param __new_vec_ptr__ [T**] - a reference to the pointer to the new vector
-     * @throw [assert] - if the reference to the new vector is NULL
-     */
     #if COMPILER_SUPPORTS_TYPEOF
+        /**
+         * Public
+         * 
+         * Returns a slice of the vector from the start index to the end index with the specified step
+         * @param __vec_ptr__     [T**]         - A reference to the vector
+         * @param __start__       [size_t]      - The start index of the slice
+         * @param __end__         [size_t]      - The end index of the slice
+         * @param __step__        [size_t]      - The step of the slice
+         * @param __new_vec_ptr__ [T**]         - A reference to the new vector
+         * @return                [T*]          - The sliced vector
+         * @throw                 [assert]      - If the reference to the vector is NULL
+         * @throw                 [assert]      - If the vector is NULL
+         * @throw                 [assert]      - If the start index is out of bounds
+         * @throw                 [assert]      - If the end index is out of bounds
+         * @throw                 [assert]      - If the step is less than or equal to 0
+         */
         #define Vector_slice(__vec_ptr__, __start__, __end__, __step__, __new_vec_ptr__) do { \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             assert((__new_vec_ptr__) != NULL); \
@@ -1394,14 +1278,21 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         } while (0)
     #else
         /**
-         * returns a slice of the vector from the start index to the end index with the specified step
-         * @param __vec_ptr__ [T**] - the pointer to the vector
-         * @param __start__ [size_t] - the start index of the slice
-         * @param __end__ [size_t] - the end index of the slice
-         * @param __step__ [size_t] - the step of the slice
-         * @param __new_vec_ptr__ [T**] - a reference to the pointer to the new vector
-         * @param __vec_element_type__ [T] - the type of the elements of the returned vector
-         * @throw [assert] - if the reference to the new vector is NULL
+         * Public
+         * 
+         * Returns a slice of the vector from the start index to the end index with the specified step
+         * @param __vec_ptr__          [T**]         - A reference to the vector
+         * @param __start__            [size_t]      - The start index of the slice
+         * @param __end__              [size_t]      - The end index of the slice
+         * @param __step__             [size_t]      - The step of the slice
+         * @param __new_vec_ptr__      [T**]         - A reference to the new vector
+         * @param __vec_element_type__ [type]        - The type of the elements of the returned vector
+         * @return                     [T*]          - The sliced vector
+         * @throw                      [assert]      - If the reference to the vector is NULL
+         * @throw                      [assert]      - If the vector is NULL
+         * @throw                      [assert]      - If the start index is out of bounds
+         * @throw                      [assert]      - If the end index is out of bounds
+         * @throw                      [assert]      - If the step is less than or equal to 0
          */
         #define Vector_slice(__vec_ptr__, __start__, __end__, __step__, __new_vec_ptr__, __vec_element_type__) do { \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \

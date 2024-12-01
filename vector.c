@@ -9,13 +9,13 @@ __Vector_Header *__get_vector_header(void *vec_ptr) {
 }
 
 /**
- * INTERNAL
+ * Internal
  * 
- * reallocates the memory of a vector
- * @param vec [T*] - the vector to reallocate
- * @param new_capacity [size_t] - the new capacity of the vector
- * @return [void*] - the new data of the vector
- * @throw [assert] - if the vector is NULL, if malloc fails
+ * Reallocates the memory of a vector
+ * @param vec          [T*]     - The vector to reallocate
+ * @param new_capacity [size_t] - The new capacity of the vector
+ * @return             [void*]  - The new data of the vector
+ * @throw              [assert] - If the vector is NULL, if malloc fails
  */
 static void *__vector_realloc(void *vec_ptr, size_t new_capacity) {
     void **temp_ptr = (void **)vec_ptr;
@@ -29,14 +29,14 @@ static void *__vector_realloc(void *vec_ptr, size_t new_capacity) {
     return new_vec->data;
 }
 
-/**
- * INTERNAL
- * 
- * returns the optimal capacity for a vector given its length
- * @param length [size_t] - the length of the vector
- * @return [size_t] - the optimal capacity for the vector
- */
 #if COMPILER_SUPPORTS_BUILTIN_CLZ
+    /**
+     * Internal
+     * 
+     * Returns the optimal capacity for a vector given its length
+     * @param length [size_t] - the length of the vector
+     * @return [size_t] - the optimal capacity for the vector
+     */
     static size_t __vector_get_basic_optimal_capacity(void *vec_ptr) {
         __Vector_Header *header = __get_vector_header(vec_ptr);
         if (header->length < header->initial_capacity) { return header->initial_capacity; }
@@ -44,6 +44,13 @@ static void *__vector_realloc(void *vec_ptr, size_t new_capacity) {
         return optimal_capacity <= header->length ? optimal_capacity << 1 : optimal_capacity;
     }
 #else
+    /**
+     * Internal
+     * 
+     * Returns the optimal capacity for a vector given its length
+     * @param length [size_t] - the length of the vector
+     * @return [size_t] - the optimal capacity for the vector
+     */
     static size_t __vector_get_basic_optimal_capacity(void *vec_ptr) {
         void **temp_ptr = (void**)vec_ptr;
         __Vector_Header *header = __get_vector_header(vec_ptr);
