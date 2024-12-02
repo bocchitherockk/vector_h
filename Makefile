@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -g
-LDFLAGS = -I./modules/system_env/
+LDFLAGS =
 
 files = "vector.c"
  

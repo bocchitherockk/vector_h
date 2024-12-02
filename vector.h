@@ -260,12 +260,12 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
      * Public
      * 
      * Gets the count of the value in the vector
-     * @param __vec_ptr__            [T**]           - a reference to the vector
-     * @param __value__              [T]             - the value to get the count of
-     * @param __boolean_comparator__ [int (*)(T, T)] - the boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value given as an argument
-     * @return                       [size_t]        - the count of the value in the vector
-     * @throw                        [assert]        - if the reference to the vector is NULL
-     * @throw                        [assert]        - if the vector is NULL
+     * @param __vec_ptr__            [T**]           - A reference to the vector
+     * @param __value__              [T]             - The value to get the count of
+     * @param __boolean_comparator__ [int (*)(T, T)] - The boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value given as an argument
+     * @return                       [size_t]        - The count of the value in the vector
+     * @throw                        [assert]        - If the reference to the vector is NULL
+     * @throw                        [assert]        - If the vector is NULL
      */
     #define Vector_count(__vec_ptr__, __value__, __boolean_comparator__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -282,12 +282,12 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
      * Public
      * 
      * Gets the count of the value in the vector
-     * @param __vec_ptr__            [T**]           - a reference to the vector
-     * @param __value__              [T]             - the value to get the count of
-     * @param __boolean_comparator__ [int (*)(T, T)] - the boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value given as an argument
-     * @param __result_ptr__         [size_t*]       - a pointer to the variable to store the count in, if NULL, the result will not be stored but the function will execute normally
-     * @throw                        [assert]        - if the reference to the vector is NULL
-     * @throw                        [assert]        - if the vector is NULL
+     * @param __vec_ptr__            [T**]           - A reference to the vector
+     * @param __value__              [T]             - The value to get the count of
+     * @param __boolean_comparator__ [int (*)(T, T)] - The boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value given as an argument
+     * @param __result_ptr__         [size_t*]       - A pointer to the variable to store the count in, if NULL, the result will not be stored but the function will execute normally
+     * @throw                        [assert]        - If the reference to the vector is NULL
+     * @throw                        [assert]        - If the vector is NULL
      */
     #define Vector_count(__vec_ptr__, __value__, __boolean_comparator__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
@@ -378,7 +378,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
      * @param __vec_ptr__             [T**]           - A reference to the vector
      * @param __value__               [T]             - The value to insert
      * @param __ordering_comparator__ [int (*)(T, T)] - The ordering comparator function to compare the values
-     * @param __result_ptr__          [size_t*]       - a pointer to the variable to store the index of the value inserted into the vector, if NULL, the result will not be stored but the function will execute normally
+     * @param __result_ptr__          [size_t*]       - A pointer to the variable to store the index of the value inserted into the vector, if NULL, the result will not be stored but the function will execute normally
      * @throw                         [assert]        - If the reference to the vector is NULL
      * @throw                         [assert]        - If the vector is NULL
      * @throw                         [assert]        - If malloc fails
@@ -859,7 +859,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
          * Filters the vector based on a filter function
          * @param __vec_ptr__     [T**]         - A reference to the vector
          * @param __filter__      [bool (*)(T)] - The filter function to filter the values
-         * @param __new_vec_ptr__ [T**]     - A reference to the pointer to the new vector
+         * @param __new_vec_ptr__ [T**]         - A reference to the pointer to the new vector
          * @throw                 [assert]      - If the reference to the vector is NULL
          * @throw                 [assert]      - If the vector is NULL
          * @throw                 [assert]      - If the reference to the new vector is NULL
