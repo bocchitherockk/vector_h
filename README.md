@@ -91,7 +91,7 @@ int main() {
     Vector_sort(&vec, lambda(int, (int value_in_vec, int value_as_param), { return value_in_vec - value_as_param; })); // Sorts the vector in place according to the sorting function given using merge sort algorithm
     int *vec3 = Vector_filter(&vec, lambda(bool, (int value_in_vec), { return int value_in_vec % 2 == 0; })); // returns a new filtered vector of even numbers
     Vector_foreach(&vec, lambda(void, (int *value_in_vec_ptr), { *value_in_vec_ptr *= 2; })); // multiplies each value in the vector by 2, modifies the vector in place
-    int *vec4 = Vector_map(&vec, lambda(int, (int value_in_vec), { return value_in_vec + 2; })); // Returns a new vector with each value mapped by the mapper function
+    int *vec4 = Vector_map(&vec, lambda(int, (int value_in_vec), { return value_in_vec + 2; }), int); // Returns a new vector with each value mapped by the mapper function, the result of the map function is a vector and it's type is specified in the third parameter
     int sum = Vector_reduce(&vec, lambda(int, (int accumulator, int value_in_vec), { return accumulator + value_in_vec; }), 0); // Calculates the sum of elements
     bool all = Vector_all(&vec, lambda(bool, (int value_in_vec), { return value_in_vec == 10; })); // checks to see if all values in the vector verify the callback function (the callback returns true)
     bool any = Vector_any(&vec, lambda(bool, (int value_in_vec), { return value_in_vec == 10; })); // checks to see if any of the values in the vector verify the callback function
