@@ -167,11 +167,7 @@ int main() {
 
     printf("mapping vec3 by adding 2 to each value and storing the result in vec4 ...\n");
     #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
-        #if COMPILER_SUPPORTS_TYPEOF
-            int *vec4 = Vector_map(&vec3, map);
-        #else
-            int *vec4 = Vector_map(&vec3, map, int);
-        #endif
+        int *vec4 = Vector_map(&vec3, map, int);
     #else
         #if COMPILER_SUPPORTS_TYPEOF
             int *vec4 = NULL;

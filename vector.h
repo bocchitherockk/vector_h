@@ -919,48 +919,26 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
 } while (0)
 
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
-    #if COMPILER_SUPPORTS_TYPEOF
-        /**
-         * Public
-         * 
-         * Maps a function to each value in the vector and returns a new vector
-         * @param __vec_ptr__ [T**]      - A reference to the vector
-         * @param __mapper__  [T (*)(T)] - The mapper function to map to each value
-         * @return            [T*]       - A new mapped vector
-         * @throw             [assert]   - If the reference to the vector is NULL
-         * @throw             [assert]   - If the vector is NULL
-         * @throw             [assert]   - If malloc fails
-         */
-        #define Vector_map(__vec_ptr__, __mapper__) ({ \
-            assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-            typeof(*(__vec_ptr__)) __new_vec__ = Vector_init(typeof(**(__vec_ptr__))); \
-            for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
-                Vector_push(&__new_vec__, (__mapper__)((*(__vec_ptr__))[__i__])); \
-            } \
-            __new_vec__; \
-        })
-    #else
-        /**
-         * Public
-         * 
-         * Maps a function to each value in the vector and returns a new vector
-         * @param __vec_ptr__          [T**]      - A reference to the vector
-         * @param __mapper__           [T (*)(T)] - The mapper function to map to each value
-         * @param __vec_element_type__ [type]     - The type of the elements of the returned vector
-         * @return                     [T*]       - A new mapped vector
-         * @throw                      [assert]   - If the reference to the vector is NULL
-         * @throw                      [assert]   - If the vector is NULL
-         * @throw                      [assert]   - If malloc fails
-         */
-        #define Vector_map(__vec_ptr__, __mapper__, __vec_element_type__) ({ \
-            assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-            __vec_element_type__ *__new_vec__ = Vector_init(__vec_element_type__); \
-            for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
-                Vector_push(&__new_vec__, (__mapper__)((*(__vec_ptr__))[__i__])); \
-            } \
-            __new_vec__; \
-        })
-    #endif
+    /**
+     * Public
+     * 
+     * Maps a function to each value in the vector and returns a new vector
+     * @param __vec_ptr__              [T**]      - A reference to the vector
+     * @param __mapper__               [T (*)(T)] - The mapper function to map to each value
+     * @param __new_vec_element_type__ [type]     - The type of the elements of the returned vector
+     * @return                         [T*]       - A new mapped vector
+     * @throw                          [assert]   - If the reference to the vector is NULL
+     * @throw                          [assert]   - If the vector is NULL
+     * @throw                          [assert]   - If malloc fails
+     */
+    #define Vector_map(__vec_ptr__, __mapper__, __new_vec_element_type__) ({ \
+        assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
+        __new_vec_element_type__ *__new_vec__ = Vector_init(__new_vec_element_type__); \
+        for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+            Vector_push(&__new_vec__, (__mapper__)((*(__vec_ptr__))[__i__])); \
+        } \
+        __new_vec__; \
+    })
 #else
     #if COMPILER_SUPPORTS_TYPEOF
         /**
@@ -978,7 +956,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         #define Vector_map(__vec_ptr__, __mapper__, __new_vec_ptr__) do { \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             assert((__new_vec_ptr__) != NULL); \
-            (*(__new_vec_ptr__)) = Vector_init(typeof(**(__vec_ptr__))); \
+            (*(__new_vec_ptr__)) = Vector_init(typeof((__new_vec_ptr__)**)); \
             for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
                 Vector_push((__new_vec_ptr__), (__mapper__)((*(__vec_ptr__))[__i__])); \
             } \
@@ -988,19 +966,19 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
          * Public
          * 
          * Maps a function to each value in the vector and returns a new vector
-         * @param __vec_ptr__          [T**]      - A reference to the vector
-         * @param __mapper__           [T (*)(T)] - The mapper function to map to each value
-         * @param __new_vec_ptr__      [T**]      - A reference to the new vector
-         * @param __vec_element_type__ [type]     - The type of the elements of the returned vector
-         * @throw                      [assert]   - If the reference to the vector is NULL
-         * @throw                      [assert]   - If the vector is NULL
-         * @throw                      [assert]   - If the reference to the new vector is NULL
-         * @throw                      [assert]   - If malloc fails
+         * @param __vec_ptr__              [T**]      - A reference to the vector
+         * @param __mapper__               [T (*)(T)] - The mapper function to map to each value
+         * @param __new_vec_ptr__          [T**]      - A reference to the new vector
+         * @param __new_vec_element_type__ [type]     - The type of the elements of the returned vector
+         * @throw                          [assert]   - If the reference to the vector is NULL
+         * @throw                          [assert]   - If the vector is NULL
+         * @throw                          [assert]   - If the reference to the new vector is NULL
+         * @throw                          [assert]   - If malloc fails
          */
-        #define Vector_map(__vec_ptr__, __mapper__, __new_vec_ptr__, __vec_element_type__) do { \
+        #define Vector_map(__vec_ptr__, __mapper__, __new_vec_ptr__, __new_vec_element_type__) do { \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             assert((__new_vec_ptr__) != NULL); \
-            (*(__new_vec_ptr__)) = Vector_init(__vec_element_type__); \
+            (*(__new_vec_ptr__)) = Vector_init(__new_vec_element_type__); \
             for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
                 Vector_push((__new_vec_ptr__), (__mapper__)((*(__vec_ptr__))[__i__])); \
             } \

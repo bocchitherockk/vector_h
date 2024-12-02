@@ -6,6 +6,7 @@ CFLAGS = -Wall -g # -Wall flag is used to enable all warnings
 LDFLAGS = -I../ -lvector -L../lib -Wl,-rpath=../lib
 
 files = "main.c"
+# files = "person.c"
 # files = "costum free.c"
 # files = "initial capacity.c"
 # files = "costum optimal capacity.c"
