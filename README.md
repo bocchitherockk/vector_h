@@ -42,11 +42,11 @@ int main() {
 
 ```c
     size_t length         = Vector_length(&vec);
-    size_t element_size   = Vector_element_size(vec);
-    size_t capacity       = Vector_capacity(vec);
-    bool   is_full        = Vector_is_full(vec);
-    bool   is_underfilled = Vector_is_underfilled(vec);
-    bool   is_empty       = Vector_is_empty(vec);
+    size_t element_size   = Vector_element_size(&vec);
+    size_t capacity       = Vector_capacity(&vec);
+    bool   is_full        = Vector_is_full(&vec);
+    bool   is_underfilled = Vector_is_underfilled(&vec);
+    bool   is_empty       = Vector_is_empty(&vec);
 ```
 
 #### 3. Adding Elements
