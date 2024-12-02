@@ -35,7 +35,7 @@ static void *__vector_realloc(void *vec_ptr, size_t new_capacity) {
      * 
      * Returns the optimal capacity for a vector given its length
      * @param length [size_t] - the length of the vector
-     * @return [size_t] - the optimal capacity for the vector
+     * @return       [size_t] - the optimal capacity for the vector
      */
     static size_t __vector_get_basic_optimal_capacity(void *vec_ptr) {
         __Vector_Header *header = __get_vector_header(vec_ptr);
@@ -49,7 +49,7 @@ static void *__vector_realloc(void *vec_ptr, size_t new_capacity) {
      * 
      * Returns the optimal capacity for a vector given its length
      * @param length [size_t] - the length of the vector
-     * @return [size_t] - the optimal capacity for the vector
+     * @return       [size_t] - the optimal capacity for the vector
      */
     static size_t __vector_get_basic_optimal_capacity(void *vec_ptr) {
         void **temp_ptr = (void**)vec_ptr;

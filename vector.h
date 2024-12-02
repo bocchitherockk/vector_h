@@ -11,6 +11,7 @@ extern "C" {    // prevent name mangling
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
+
 #include "./modules/system_env/system_env.h"
 
 #define VECTOR_DEFAULT_INITIAL_CAPACITY 4
@@ -233,7 +234,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
      * @param __vec_ptr__            [T**]           - A reference to the vector
      * @param __value__              [size_t]        - The value to get the index of
      * @param __boolean_comparator__ [int (*)(T, T)] - The boolean comparator function to compare the values (should return true if the values are equal, false otherwise), the first argument is the value in the vector, the second argument is the value given as an argument
-     * @param __result_ptr__         [size_t*]       - a pointer to the variable to store the index in, if NULL, the result will not be stored but the function will execute normally
+     * @param __result_ptr__         [size_t*]       - A pointer to the variable to store the index in, if NULL, the result will not be stored but the function will execute normally
      * @throw                        [assert]        - If the reference to the vector is NULL
      * @throw                        [assert]        - If the vector is NULL
      * @throw                        [assert]        - If the value does not exist in the vector
@@ -421,7 +422,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     } \
 } while (0)
 
-#if COMPILER_SUPPORTS_STATEMENT_EXPESSIONS
+#if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
