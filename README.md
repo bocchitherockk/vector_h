@@ -11,7 +11,7 @@ To integrate the Generic Vector Library into your project, follow these steps:
 1. Clone the repository into your project directory.
 2. Cd into the 'modules' directory and execute the python script to git clone the necessary dependencies, (you can do it manually if you want, they are listed in the modules.json file).
 3. Cd back and build the source code (create dynamic and static libraries) by executing the command `make export`
-4. Include the vector.h header file in your own project and don't forget to compile it without linking with one of the libraries (you can instead compile the vector.c with no need to create a library and link with it). `gcc my_files.c -l:libvector.a -Lpath/to/lib -Wl,-rpath=path/to/lib -o out`
+4. Include the vector.h header file in your own project and don't forget to compile it without linking with one of the libraries (you can instead compile the vector.c with no need to create a library and link with it). `gcc -o out my_files.c -l:libvector.a -Lpath/to/lib -Wl,-rpath=path/to/lib`
 5. Happy coding 🤓
 
 ### Compilers
@@ -29,12 +29,12 @@ This library provides suppport for `c++` as well by preventing name mangling.
 #### 1. Initialization and Destruction
 
 ```c
+#include <lambda.h> // https://github.com/bocchitherockk/lambda.h (this is not necessary, you can create normal functions and use them as parameters)
 #include "./vector.h"
-int main() {
-    int *vec = Vector_init(int);
-    // Now you can use `vec` with other vector functions
-    Vector_destroy(&vec);
-    // The vector gets freed from the memory and cannot be used again as it points to NULL, unless reinitialized
+
+int main(void) {
+    int *vec = Vector_init(int); // `vec` is initialized as a vector of integers
+    Vector_destroy(&vec); // The vector gets freed from the memory and cannot be used again as it points to NULL, unless reinitialized
 }
 ```
 
@@ -52,9 +52,9 @@ int main() {
 #### 3. Adding Elements
 
 ```c
-    Vector_push(&vec, 10); // Adds an element to the end of the vector
+    Vector_push(&vec, 10); // Adds the element 10 to the end of the vector
     Vector_insert_at(&vec, 1, 100); // inserts 100 at index 1
-    int insertion_index = Vector_insert_sorted(&vec, 5, lambda(int, (int value_in_vec, int value_as_param), { return value_in_vec - value_as_param; }));
+    int insertion_index = Vector_insert_sorted(&vec, 5, lambda(int, (int value_in_vec, int value_as_param) { return value_in_vec - value_as_param; }));
     // inserts 5 in it's sorted position, considering that the vector is already sorted and returns the index inserted in
     Vector_concat(&vec, &vec2); // pushes the elements in vec2 to the end of vec
 ```
@@ -64,7 +64,7 @@ int main() {
 ```c
     int value = vec[0]; // Access the first element
     vec[3]    = 15; // setting the value at index 3 to 15
-    int *ptr  = &vec[0]; // this is a wrong approach, as this pointer will be pointing to a wrong address when the vector gets resized
+    int *ptr  = &vec[0]; // this approach is wrong, as this will be a dangling pointer when the vector gets resized upon inserting more elements or deleting
 ```
 
 #### 5. Removing Elements

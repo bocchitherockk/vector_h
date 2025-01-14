@@ -5,4 +5,4 @@ object
 
 modules/*
 !modules/modules.json
-!modules/script.py
+!modules/clone dependencies.py
