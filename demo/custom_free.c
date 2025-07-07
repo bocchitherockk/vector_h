@@ -24,7 +24,7 @@ void free_fn(void *vec_ptr) {
         Vector_destroy((*temp_vec)[i]);
         free((*temp_vec)[i]);
     }
-    free(__get_vector_header(temp_vec));
+    free(__vector_get_header(temp_vec));
 }
 
 int main() {

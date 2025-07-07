@@ -52,7 +52,7 @@ void *VECTOR_IGNORE_RETURN = NULL;
  * @throw         [assert]           - If the reference to the vector is NULL
  * @throw         [assert]           - If the vector is NULL
  */
-__Vector_Header *__get_vector_header(void *vec_ptr);
+__Vector_Header *__vector_get_header(void *vec_ptr);
 
 /**
  * Internal
@@ -205,7 +205,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
  */
 #define Vector_destroy(__vec_ptr__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-    __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+    __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
     if (__header__->free_fn == NULL) { \
         free(__header__); \
         (*(__vec_ptr__)) = NULL; \
@@ -328,7 +328,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
 #define Vector_push(__vec_ptr__, __value__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
     __vector_resize_if_needed((__vec_ptr__)); \
-    __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+    __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
     (*(__vec_ptr__))[__header__->length++] = (__value__); \
 } while (0)
 
@@ -346,7 +346,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
  */
 #define Vector_insert_at(__vec_ptr__, __index__, __value__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-    __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+    __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
     assert((__index__) >= 0 && (__index__) <= __header__->length); \
     __vector_resize_if_needed((__vec_ptr__)); \
     memmove((*(__vec_ptr__)) + (__index__) + 1, (*(__vec_ptr__)) + (__index__), (__header__->length - (__index__)) * __header__->element_size); \
@@ -370,7 +370,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
     #define Vector_insert_sorted(__vec_ptr__, __value__, __ordering_comparator__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
         __vector_resize_if_needed((__vec_ptr__)); \
-        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+        __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
         size_t __low__ = 0; \
         size_t __high__ = __header__->length; \
         while (__low__ < __high__) { \
@@ -400,7 +400,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
     #define Vector_insert_sorted(__vec_ptr__, __value__, __ordering_comparator__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
         __vector_resize_if_needed((__vec_ptr__)); \
-        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+        __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
         size_t __low__ = 0; \
         size_t __high__ = __header__->length; \
         while (__low__ < __high__) { \
@@ -450,7 +450,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
          */
         #define Vector_pop(__vec_ptr__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-            __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+            __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
             assert(__header__->length > 0); \
             typeof(**(__vec_ptr__)) __value__ = (*(__vec_ptr__))[__header__->length - 1]; \
             __header__->length--; \
@@ -471,7 +471,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
          */
         #define Vector_pop(__vec_ptr__, __vec_element_type__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-            __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+            __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
             assert(__header__->length > 0); \
             __vec_element_type__ __value__ = (*(__vec_ptr__))[__header__->length - 1]; \
             __header__->length--; \
@@ -493,7 +493,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
      */
     #define Vector_pop(__vec_ptr__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+        __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
         assert(__header__->length > 0); \
         if ((__result_ptr__) != NULL) { \
             (*(__result_ptr__)) = (*(__vec_ptr__))[__header__->length - 1]; \
@@ -518,7 +518,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
          */
         #define Vector_remove_at(__vec_ptr__, __index__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-            __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+            __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
             assert((__index__) >= 0 && (__index__) < __header__->length); \
             typeof(**(__vec_ptr__)) __value__ = (*(__vec_ptr__))[(__index__)]; \
             memmove((*(__vec_ptr__)) + (__index__), (*(__vec_ptr__)) + (__index__) + 1, (__header__->length - (__index__) - 1) * __header__->element_size); \
@@ -541,7 +541,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
          */
         #define Vector_remove_at(__vec_ptr__, __index__, __vec_element_type__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-            __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+            __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
             assert((__index__) >= 0 && (__index__) < __header__->length); \
             __vec_element_type__ __value__ = (*(__vec_ptr__))[(__index__)]; \
             memmove((*(__vec_ptr__)) + (__index__), (*(__vec_ptr__)) + (__index__) + 1, (__header__->length - (__index__) - 1) * __header__->element_size); \
@@ -565,7 +565,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
      */
     #define Vector_remove_at(__vec_ptr__, __index__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+        __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
         assert((__index__) >= 0 && (__index__) < __header__->length); \
         if ((__result_ptr__) != NULL) { \
             (*(__result_ptr__)) = (*(__vec_ptr__))[(__index__)]; \
@@ -653,7 +653,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
  */
 #define Vector_clear(__vec_ptr__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-    __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+    __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
     __header__->length = 0; \
     __vector_resize_if_needed((__vec_ptr__)); \
 } while (0)
@@ -674,7 +674,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
      */
     #define Vector_copy(__vec_ptr__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        __Vector_Header *__old_vec__ = __get_vector_header((__vec_ptr__)); \
+        __Vector_Header *__old_vec__ = __vector_get_header((__vec_ptr__)); \
         __Vector_Header *__new_vec__ = (__Vector_Header *)malloc(sizeof(__Vector_Header) + __old_vec__->capacity * __old_vec__->element_size); \
         assert(__new_vec__ != NULL); \
         memcpy(__new_vec__, __old_vec__, sizeof(__Vector_Header) + __old_vec__->length * __old_vec__->element_size); \
@@ -695,7 +695,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
     #define Vector_copy(__old_vec_ptr__, __new_vec_ptr__) do { \
         assert(((__old_vec_ptr__) != NULL) && ((*(__old_vec_ptr__)) != NULL)); \
         assert((__new_vec_ptr__) != NULL); \
-        __Vector_Header *__old_vec__ = __get_vector_header((__old_vec_ptr__)); \
+        __Vector_Header *__old_vec__ = __vector_get_header((__old_vec_ptr__)); \
         __Vector_Header *__new_vec__ = (__Vector_Header *)malloc(sizeof(__Vector_Header) + __old_vec__->capacity * __old_vec__->element_size); \
         assert(__new_vec__ != NULL); \
         memcpy(__new_vec__, __old_vec__, sizeof(__Vector_Header) + __old_vec__->length * __old_vec__->element_size); \
@@ -714,7 +714,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
      */
     #define Vector_reverse(__vec_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+        __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
         typeof(**(__vec_ptr__)) __temp__; \
         for (size_t __i__ = 0; __i__ < __header__->length / 2; __i__++) { \
             __temp__ = (*(__vec_ptr__))[__i__]; \
@@ -734,7 +734,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
      */
     #define Vector_reverse(__vec_ptr__, __vec_element_type__) do {                             \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+        __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
         __vec_element_type__ __temp__; \
         for (size_t __i__ = 0; __i__ < __header__->length / 2; __i__++) { \
             __temp__ = (*(__vec_ptr__))[__i__]; \
@@ -797,7 +797,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
      */
     #define Vector_sort(__vec_ptr__, __ordering_comparator__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+        __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
         __merge_sort__((*(__vec_ptr__)), __header__->length, (__ordering_comparator__)); \
     } while (0)
 #else // COMPILER_SUPPORTS_TYPEOF
@@ -854,7 +854,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
      */
     #define Vector_sort(__vec_ptr__, __ordering_comparator__, __vec_element_type__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+        __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
         __merge_sort__((*(__vec_ptr__)), __header__->length, (__ordering_comparator__), __vec_element_type__); \
     } while (0)
 #endif // COMPILER_SUPPORTS_TYPEOF
@@ -1241,7 +1241,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
         #define Vector_slice(__vec_ptr__, __start__, __end__, __step__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             typeof(*(__vec_ptr__)) __new_vec__ = Vector_init(typeof(**(__vec_ptr__))); \
-            __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+            __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
             assert((__start__) >= 0 && (__start__) < __header__->length); \
             assert((__end__) >= 0 && (__end__) <= __header__->length); \
             assert((__step__) > 0); \
@@ -1270,7 +1270,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
         #define Vector_slice(__vec_ptr__, __start__, __end__, __step__, __vec_element_type__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             __vec_element_type__ *__new_vec__ = Vector_init(__vec_element_type__); \
-            __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+            __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
             assert((__start__) >= 0 && (__start__) < __header__->length); \
             assert((__end__) >= 0 && (__end__) <= __header__->length); \
             assert((__step__) > 0); \
@@ -1302,7 +1302,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             assert((__new_vec_ptr__) != NULL); \
             (*(__new_vec_ptr__)) = Vector_init(typeof(**(__vec_ptr__))); \
-            __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+            __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
             assert((__start__) >= 0 && (__start__) < __header__->length); \
             assert((__end__) >= 0 && (__end__) <= __header__->length); \
             assert((__step__) > 0); \
@@ -1332,7 +1332,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             assert((__new_vec_ptr__) != NULL); \
             (*(__new_vec_ptr__)) = Vector_init(__vec_element_type__); \
-            __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+            __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
             assert((__start__) >= 0 && (__start__) < __header__->length); \
             assert((__end__) >= 0 && (__end__) <= __header__->length); \
             assert((__step__) > 0); \
