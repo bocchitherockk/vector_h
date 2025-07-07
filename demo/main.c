@@ -64,7 +64,7 @@ int main(void) {
 
     printf("getting the index of the first 5 in vec1 ...\n");
     #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
-        int index = Vector_index(&vec1, 5, int_boolean_comparator);
+        int index = Vector_index_of(&vec1, 5, int_boolean_comparator);
     #else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
         int index = 0;
         Vector_index(&vec1, 5, int_boolean_comparator, &index);
