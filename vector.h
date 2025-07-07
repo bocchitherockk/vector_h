@@ -1,20 +1,22 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#include "./modules/system_env/system_env.h"
+
 #if LANGUAGE_CPP // C++ support
-#warning c++ compilers do not automatically cast void* to other types, you have to cast the result of Vector_copy manually
-#warning example: int *result = (int*)Vector_copy(&vec1);
 extern "C" {    // prevent name mangling
-#endif // C++ support
+#endif         // C++ support
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
 
-#include "./modules/system_env/system_env.h"
 
 #define VECTOR_DEFAULT_INITIAL_CAPACITY 4
+
+typedef void (*Vector_free_fn)(void *vec_ptr);
+typedef size_t (*Vector_calculate_optimal_capacity_fn)(void *vec_ptr);
 
 // i am storing the element size in the header so that i can have a workaround
 // for some functions for the compilers that do not support 'typeof' keyword
@@ -23,11 +25,23 @@ typedef struct __Vector_Header {
     size_t length;
     size_t capacity;
     size_t initial_capacity;
-    void (*free_fn) (void *vec_ptr); // you can cast the pointer to the vector to the type you want and free it
-    size_t (*optimal_capacity_fn) (void *vec_ptr);
+    Vector_free_fn free_fn; // Cast the pointer to the vector to the type you want and free it
+    Vector_calculate_optimal_capacity_fn calculate_optimal_capacity_fn;
     char data[];
 } __Vector_Header;
 
+
+#if !COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
+// Pass this as a last argument if your compiler does not support STATEMENT_EXPRESSIONS and you don't care about the result
+// Note: you have to cast this value to a pointer type other than void (preferrably the same type as the vector)
+// example:
+// ```
+//     int *vec = Vector_init(int);
+//     Vector_push(&vec, 10);
+//     Vector_pop(&vec, (int *)VECTOR_IGNORE_RETURN)
+// ```
+void *VECTOR_IGNORE_RETURN = NULL;
+#endif // !COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 /**
  * Internal
@@ -48,7 +62,7 @@ __Vector_Header *__get_vector_header(void *vec_ptr);
  * @throw         [assert] - If the reference to the vector is NULL
  * @throw         [assert] - If the vector is NULL
  */
-void __vector_resize(void *vec_ptr);
+void __vector_resize_if_needed(void *vec_ptr);
 
 /**
  * Internal
@@ -79,7 +93,7 @@ void *__vector_init(size_t element_size);
  * @throw         [assert] - If the reference to the vector is NULL
  * @throw         [assert] - If the vector is NULL
  */
-size_t Vector_element_size(void *vec_ptr);
+size_t Vector_get_element_size(void *vec_ptr);
 
 /**
  * Public
@@ -90,7 +104,7 @@ size_t Vector_element_size(void *vec_ptr);
  * @throw         [assert] - If the reference to the vector is NULL
  * @throw         [assert] - If the vector is NULL
  */
-size_t Vector_length(void *vec_ptr);
+size_t Vector_get_length(void *vec_ptr);
 
 /**
  * Public
@@ -101,7 +115,7 @@ size_t Vector_length(void *vec_ptr);
  * @throw         [assert] - If the reference to the vector is NULL
  * @throw         [assert] - If the vector is NULL
  */
-size_t Vector_capacity(void *vec_ptr);
+size_t Vector_get_capacity(void *vec_ptr);
 
 /**
  * Public
@@ -112,7 +126,7 @@ size_t Vector_capacity(void *vec_ptr);
  * @throw         [assert] - If the reference to the vector is NULL
  * @throw         [assert] - If the vector is NULL
  */
-size_t Vector_initial_capacity(void *vec_ptr);
+size_t Vector_get_initial_capacity(void *vec_ptr);
 
 /**
  * Public
@@ -151,12 +165,12 @@ bool Vector_is_empty(void *vec_ptr);
  * Public
  * 
  * Sets the custom free function of the vector
- * @param vec_ptr [T**]          - a reference to the vector
- * @param free_fn [void (*)(T*)] - the free function to free the vector
- * @throw         [assert]       - if the reference to the vector is NULL
- * @throw         [assert]       - if the vector is NULL
+ * @param vec_ptr [T**]            - a reference to the vector
+ * @param free_fn [Vector_free_fn] - the free function to free the vector
+ * @throw         [assert]         - if the reference to the vector is NULL
+ * @throw         [assert]         - if the vector is NULL
  */
-void Vector_set_free_fn(void *vec_ptr, void (*free_fn)(void *vec_ptr));
+void Vector_set_free_fn(void *vec_ptr, Vector_free_fn free_fn);
 
 /**
  * Public
@@ -174,12 +188,12 @@ void Vector_set_initial_capacity(void *vec_ptr, size_t initial_capacity);
  * Public
  * 
  * Sets the custom function that calculates the optimal capacity of the vector
- * @param vec_ptr             [T**]               - A reference to the vector
- * @param optimal_capacity_fn [size_t (*)(void*)] - The function that calculates the optimal capacity of the vector
- * @throw                     [assert]            - If the reference to the vector is NULL
- * @throw                     [assert]            - If the vector is NULL
+ * @param vec_ptr                       [T**]                                  - A reference to the vector
+ * @param calculate_optimal_capacity_fn [Vector_calculate_optimal_capacity_fn] - The function that calculates the optimal capacity of the vector
+ * @throw                               [assert]                               - If the reference to the vector is NULL
+ * @throw                               [assert]                               - If the vector is NULL
  */
-void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)(void *vec_ptr));
+void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_optimal_capacity_fn calculate_optimal_capacity_fn);
 
 /**
  * Public
@@ -217,7 +231,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
         bool __found__ = false; \
         size_t __i__ = 0; \
-        for ( ; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+        for ( ; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
             if ((__boolean_comparator__)((*(__vec_ptr__))[__i__], (__value__))) { \
                 __found__ = true; \
                 break; \
@@ -226,7 +240,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         assert(__found__); \
         __i__; \
     })
-#else
+#else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
      * Public
      * 
@@ -243,7 +257,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
         bool __found__ = false; \
         size_t __i__ = 0; \
-        for ( ; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+        for ( ; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
             if ((__boolean_comparator__)((*(__vec_ptr__))[__i__], (__value__))) { \
                 __found__ = true; \
                 break; \
@@ -252,7 +266,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         assert(__found__); \
         if ((__result_ptr__) != NULL) { (*(__result_ptr__)) = __i__; } \
     } while (0)
-#endif
+#endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
@@ -270,14 +284,14 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     #define Vector_count(__vec_ptr__, __value__, __boolean_comparator__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
         size_t __count__ = 0; \
-        for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+        for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
             if ((__boolean_comparator__)((*(__vec_ptr__))[__i__], (__value__))) { \
                 __count__++; \
             } \
         } \
         __count__; \
     })
-#else
+#else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
      * Public
      * 
@@ -292,14 +306,14 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     #define Vector_count(__vec_ptr__, __value__, __boolean_comparator__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
         size_t __count__ = 0; \
-        for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+        for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
             if ((__boolean_comparator__)((*(__vec_ptr__))[__i__], (__value__))) { \
                 __count__++; \
             } \
         } \
         if ((__result_ptr__) != NULL) { (*(__result_ptr__)) = __count__; } \
     } while (0)
-#endif
+#endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 /**
  * Public
@@ -313,7 +327,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
  */
 #define Vector_push(__vec_ptr__, __value__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-    __vector_resize((__vec_ptr__)); \
+    __vector_resize_if_needed((__vec_ptr__)); \
     __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
     (*(__vec_ptr__))[__header__->length++] = (__value__); \
 } while (0)
@@ -334,7 +348,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
     __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
     assert((__index__) >= 0 && (__index__) <= __header__->length); \
-    __vector_resize((__vec_ptr__)); \
+    __vector_resize_if_needed((__vec_ptr__)); \
     memmove((*(__vec_ptr__)) + (__index__) + 1, (*(__vec_ptr__)) + (__index__), (__header__->length - (__index__)) * __header__->element_size); \
     (*(__vec_ptr__))[(__index__)] = (__value__); \
     __header__->length++; \
@@ -355,7 +369,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
      */
     #define Vector_insert_sorted(__vec_ptr__, __value__, __ordering_comparator__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        __vector_resize((__vec_ptr__)); \
+        __vector_resize_if_needed((__vec_ptr__)); \
         __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
         size_t __low__ = 0; \
         size_t __high__ = __header__->length; \
@@ -370,7 +384,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         Vector_insert_at((__vec_ptr__), __low__, (__value__)); \
         __low__; \
     })
-#else
+#else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
      * Public
      * 
@@ -385,7 +399,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
      */
     #define Vector_insert_sorted(__vec_ptr__, __value__, __ordering_comparator__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        __vector_resize((__vec_ptr__)); \
+        __vector_resize_if_needed((__vec_ptr__)); \
         __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
         size_t __low__ = 0; \
         size_t __high__ = __header__->length; \
@@ -400,7 +414,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         Vector_insert_at((__vec_ptr__), __low__, (__value__)); \
         if ((__result_ptr__) != NULL) { (*(__result_ptr__)) = __low__; } \
     } while (0)
-#endif
+#endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 /**
  * Public
@@ -417,7 +431,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
 #define Vector_concat(__vec_ptr1__, __vec_ptr2__) do { \
     assert(((__vec_ptr1__) != NULL) && ((*(__vec_ptr1__)) != NULL)); \
     assert(((__vec_ptr2__) != NULL) && ((*(__vec_ptr2__)) != NULL)); \
-    for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr2__)); __i__++) { \
+    for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr2__)); __i__++) { \
         Vector_push((__vec_ptr1__), (*(__vec_ptr2__))[__i__]); \
     } \
 } while (0)
@@ -440,10 +454,10 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             assert(__header__->length > 0); \
             typeof(**(__vec_ptr__)) __value__ = (*(__vec_ptr__))[__header__->length - 1]; \
             __header__->length--; \
-            __vector_resize((__vec_ptr__)); \
+            __vector_resize_if_needed((__vec_ptr__)); \
             __value__; \
         })
-    #else
+    #else // COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
          * 
@@ -459,14 +473,13 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
             assert(__header__->length > 0); \
-            __vec_element_type__ __value__; \
-            memcpy(&__value__, (*(__vec_ptr__)) + __header__->length - 1, __header__->element_size); \
+            __vec_element_type__ __value__ = (*(__vec_ptr__))[__header__->length - 1]; \
             __header__->length--; \
-            __vector_resize((__vec_ptr__)); \
+            __vector_resize_if_needed((__vec_ptr__)); \
             __value__; \
         })
-    #endif
-#else
+    #endif // COMPILER_SUPPORTS_TYPEOF
+#else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
      * Public
      * 
@@ -486,9 +499,9 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             (*(__result_ptr__)) = (*(__vec_ptr__))[__header__->length - 1]; \
         } \
         __header__->length--; \
-        __vector_resize((__vec_ptr__)); \
+        __vector_resize_if_needed((__vec_ptr__)); \
     } while (0)
-#endif
+#endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
@@ -510,10 +523,10 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             typeof(**(__vec_ptr__)) __value__ = (*(__vec_ptr__))[(__index__)]; \
             memmove((*(__vec_ptr__)) + (__index__), (*(__vec_ptr__)) + (__index__) + 1, (__header__->length - (__index__) - 1) * __header__->element_size); \
             __header__->length--; \
-            __vector_resize((__vec_ptr__)); \
+            __vector_resize_if_needed((__vec_ptr__)); \
             __value__; \
         })
-    #else
+    #else // COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
          * 
@@ -531,14 +544,13 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
             assert((__index__) >= 0 && (__index__) < __header__->length); \
             __vec_element_type__ __value__ = (*(__vec_ptr__))[(__index__)]; \
-            memcpy(&__value__, (*(__vec_ptr__)) + (__index__), __header__->element_size); \
             memmove((*(__vec_ptr__)) + (__index__), (*(__vec_ptr__)) + (__index__) + 1, (__header__->length - (__index__) - 1) * __header__->element_size); \
             __header__->length--; \
-            __vector_resize((__vec_ptr__)); \
+            __vector_resize_if_needed((__vec_ptr__)); \
             __value__; \
         })
-    #endif
-#else
+    #endif // COMPILER_SUPPORTS_TYPEOF
+#else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
      * Public
      * 
@@ -560,31 +572,54 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         } \
         memmove((*(__vec_ptr__)) + (__index__), (*(__vec_ptr__)) + (__index__) + 1, (__header__->length - (__index__) - 1) * __header__->element_size); \
         __header__->length--; \
-        __vector_resize((__vec_ptr__)); \
+        __vector_resize_if_needed((__vec_ptr__)); \
     } while (0)
-#endif
+#endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
-    /**
-     * Public
-     * 
-     * Removes the first occurrence of the value from the vector
-     * @param __vec_ptr__            [T**]           - A reference to the vector
-     * @param __value__              [T]             - The value to remove
-     * @param __boolean_comparator__ [int (*)(T, T)] - The boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value to search for
-     * @return                       [size_t]        - The index of the value removed from the vector
-     * @throw                        [assert]        - If the reference to the vector is NULL
-     * @throw                        [assert]        - If the vector is NULL
-     * @throw                        [assert]        - If malloc fails
-     * @throw                        [assert]        - If the value does not exist in the vector
-     */
-    #define Vector_remove_value(__vec_ptr__, __value__, __boolean_comparator__) ({ \
-        assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-        size_t __index__ = Vector_index((__vec_ptr__), (__value__), (__boolean_comparator__)); \
-        Vector_remove_at((__vec_ptr__), __index__); \
-        __index__; \
-    })
-#else
+    #if COMPILER_SUPPORTS_TYPEOF
+        /**
+         * Public
+         * 
+         * Removes the first occurrence of the value from the vector
+         * @param __vec_ptr__            [T**]           - A reference to the vector
+         * @param __value__              [T]             - The value to remove
+         * @param __boolean_comparator__ [int (*)(T, T)] - The boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value to search for
+         * @return                       [size_t]        - The index of the value removed from the vector
+         * @throw                        [assert]        - If the reference to the vector is NULL
+         * @throw                        [assert]        - If the vector is NULL
+         * @throw                        [assert]        - If malloc fails
+         * @throw                        [assert]        - If the value does not exist in the vector
+         */
+        #define Vector_remove_value(__vec_ptr__, __value__, __boolean_comparator__) ({ \
+            assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
+            size_t __index__ = Vector_index((__vec_ptr__), (__value__), (__boolean_comparator__)); \
+            Vector_remove_at((__vec_ptr__), __index__); \
+            __index__; \
+        })
+    #else // COMPILER_SUPPORTS_TYPEOF
+        /**
+         * Public
+         * 
+         * Removes the first occurrence of the value from the vector
+         * @param __vec_ptr__            [T**]           - A reference to the vector
+         * @param __value__              [T]             - The value to remove
+         * @param __boolean_comparator__ [int (*)(T, T)] - The boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value to search for
+         * @param __vec_element_type__   [type]          - The type of the vector elements
+         * @return                       [size_t]        - The index of the value removed from the vector
+         * @throw                        [assert]        - If the reference to the vector is NULL
+         * @throw                        [assert]        - If the vector is NULL
+         * @throw                        [assert]        - If malloc fails
+         * @throw                        [assert]        - If the value does not exist in the vector
+         */
+#define Vector_remove_value(__vec_ptr__, __value__, __boolean_comparator__, __vec_element_type__) ({ \
+            assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
+            size_t __index__ = Vector_index((__vec_ptr__), (__value__), (__boolean_comparator__)); \
+            Vector_remove_at((__vec_ptr__), __index__, __vec_element_type__); \
+            __index__; \
+        })
+    #endif // COMPILER_SUPPORTS_TYPEOF
+#else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
      * Public
      * 
@@ -602,10 +637,10 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
         size_t __index__; \
         Vector_index((__vec_ptr__), (__value__), (__boolean_comparator__), &__index__); \
-        Vector_remove_at((__vec_ptr__), (*(__result_ptr__))); \
+        Vector_remove_at((__vec_ptr__), __index__, (char *)VECTOR_IGNORE_RETURN); \
         if ((__result_ptr__) != NULL) { (*(__result_ptr__)) = __index__; } \
     } while (0)
-#endif
+#endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 
 /**
@@ -620,7 +655,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
     __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
     __header__->length = 0; \
-    __vector_resize((__vec_ptr__)); \
+    __vector_resize_if_needed((__vec_ptr__)); \
 } while (0)
 
 
@@ -645,7 +680,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         memcpy(__new_vec__, __old_vec__, sizeof(__Vector_Header) + __old_vec__->length * __old_vec__->element_size); \
         (void*)__new_vec__->data; \
     })
-#else
+#else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
      * Public
      * 
@@ -666,28 +701,48 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         memcpy(__new_vec__, __old_vec__, sizeof(__Vector_Header) + __old_vec__->length * __old_vec__->element_size); \
         (*(__new_vec_ptr__)) = (void*)__new_vec__->data; \
     } while (0)
-#endif
+#endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
-/**
- * Public
- * 
- * Reverses the vector in place
- * @param __vec_ptr__ [T**]    - A reference to the vector
- * @throw             [assert] - If the reference to the vector is NULL
- * @throw             [assert] - If the vector is NULL
- */
-#define Vector_reverse(__vec_ptr__) do { \
-    assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-    __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
-    void *__temp__ = malloc(__header__->element_size); \
-    assert(__temp__ != NULL); \
-    for (size_t __i__ = 0; __i__ < __header__->length / 2; __i__++) { \
-        memcpy(__temp__, (*(__vec_ptr__)) + __i__, __header__->element_size); \
-        memcpy((*(__vec_ptr__)) + __i__, (*(__vec_ptr__)) + (__header__->length - __i__ - 1), __header__->element_size); \
-        memcpy((*(__vec_ptr__)) + (__header__->length - __i__ - 1), __temp__, __header__->element_size); \
-    } \
-    free(__temp__); \
-} while (0)
+#if COMPILER_SUPPORTS_TYPEOF
+    /**
+     * Public
+     * 
+     * Reverses the vector in place
+     * @param __vec_ptr__ [T**]    - A reference to the vector
+     * @throw             [assert] - If the reference to the vector is NULL
+     * @throw             [assert] - If the vector is NULL
+     */
+    #define Vector_reverse(__vec_ptr__) do { \
+        assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
+        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+        typeof(**(__vec_ptr__)) __temp__; \
+        for (size_t __i__ = 0; __i__ < __header__->length / 2; __i__++) { \
+            __temp__ = (*(__vec_ptr__))[__i__]; \
+            (*(__vec_ptr__))[__i__] = (*(__vec_ptr__))[__header__->length - __i__ - 1]; \
+            (*(__vec_ptr__))[__header__->length - __i__ - 1] = __temp__; \
+        } \
+    } while (0)
+#else // COMPILER_SUPPORTS_TYPEOF
+    /**
+     * Public
+     * 
+     * Reverses the vector in place
+     * @param __vec_ptr__          [T**]    - A reference to the vector
+     * @param __vec_element_type__ [type]   - A reference to the vector
+     * @throw                      [assert] - If the reference to the vector is NULL
+     * @throw                      [assert] - If the vector is NULL
+     */
+    #define Vector_reverse(__vec_ptr__, __vec_element_type__) do {                             \
+        assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
+        __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
+        __vec_element_type__ __temp__; \
+        for (size_t __i__ = 0; __i__ < __header__->length / 2; __i__++) { \
+            __temp__ = (*(__vec_ptr__))[__i__]; \
+            (*(__vec_ptr__))[__i__] = (*(__vec_ptr__))[__header__->length - __i__ - 1]; \
+            (*(__vec_ptr__))[__header__->length - __i__ - 1] = __temp__; \
+        } \
+    } while (0)
+#endif // COMPILER_SUPPORTS_TYPEOF
 
 #if COMPILER_SUPPORTS_TYPEOF
     #define __merge__(__arr__, __left_size__, __mid__, __right_size__, __ordering_comparator__) do { \
@@ -745,7 +800,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
         __merge_sort__((*(__vec_ptr__)), __header__->length, (__ordering_comparator__)); \
     } while (0)
-#else
+#else // COMPILER_SUPPORTS_TYPEOF
     #define __merge__(__arr__, __left_size__, __mid__, __right_size__, __ordering_comparator__, __vec_element_type__) do { \
         int __i__, __j__, __k__; \
         int __n1__ = (__mid__) - (__left_size__) + 1; \
@@ -802,7 +857,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         __Vector_Header *__header__ = __get_vector_header((__vec_ptr__)); \
         __merge_sort__((*(__vec_ptr__)), __header__->length, (__ordering_comparator__), __vec_element_type__); \
     } while (0)
-#endif
+#endif // COMPILER_SUPPORTS_TYPEOF
 
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
@@ -820,14 +875,14 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         #define Vector_filter(__vec_ptr__, __filter__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             typeof(*(__vec_ptr__)) __new_vec__ = Vector_init(typeof(**(__vec_ptr__))); \
-            for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+            for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
                 if ((__filter__)((*(__vec_ptr__))[__i__])) { \
                     Vector_push(&__new_vec__, (*(__vec_ptr__))[__i__]); \
                 } \
             } \
             __new_vec__; \
         })
-    #else
+    #else // COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
          * 
@@ -843,15 +898,15 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         #define Vector_filter(__vec_ptr__, __filter__, __vec_element_type__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             __vec_element_type__ *__new_vec__ = Vector_init(__vec_element_type__); \
-            for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+            for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
                 if ((__filter__)((*(__vec_ptr__))[__i__])) { \
                     Vector_push(&__new_vec__, (*(__vec_ptr__))[__i__]); \
                 } \
             } \
             __new_vec__; \
         })
-    #endif
-#else
+    #endif // COMPILER_SUPPORTS_TYPEOF
+#else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
@@ -869,13 +924,13 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             assert((__new_vec_ptr__) != NULL); \
             (*(__new_vec_ptr__)) = Vector_init(typeof(**(__vec_ptr__))); \
-            for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+            for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
                 if ((__filter__)((*(__vec_ptr__))[__i__])) { \
                     Vector_push((__new_vec_ptr__), (*(__vec_ptr__))[__i__]); \
                 } \
             } \
         } while (0)
-    #else
+    #else // COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
          * 
@@ -893,14 +948,14 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             assert((__new_vec_ptr__) != NULL); \
             (*(__new_vec_ptr__)) = Vector_init(__vec_element_type__); \
-            for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+            for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
                 if ((__filter__)((*(__vec_ptr__))[__i__])) { \
                     Vector_push((__new_vec_ptr__), (*(__vec_ptr__))[__i__]); \
                 } \
             } \
         } while (0)
-    #endif
-#endif
+    #endif // COMPILER_SUPPORTS_TYPEOF
+#endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 /**
  * Public
@@ -913,7 +968,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
  */
 #define Vector_foreach(__vec_ptr__, __func__) do { \
     assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
-    for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+    for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
         (__func__)(&((*(__vec_ptr__))[__i__])); \
     } \
 } while (0)
@@ -934,12 +989,12 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     #define Vector_map(__vec_ptr__, __mapper__, __new_vec_element_type__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
         __new_vec_element_type__ *__new_vec__ = Vector_init(__new_vec_element_type__); \
-        for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+        for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
             Vector_push(&__new_vec__, (__mapper__)((*(__vec_ptr__))[__i__])); \
         } \
         __new_vec__; \
     })
-#else
+#else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
@@ -956,12 +1011,12 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         #define Vector_map(__vec_ptr__, __mapper__, __new_vec_ptr__) do { \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             assert((__new_vec_ptr__) != NULL); \
-            (*(__new_vec_ptr__)) = Vector_init(typeof((__new_vec_ptr__)**)); \
-            for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+            (*(__new_vec_ptr__)) = Vector_init(typeof(**(__new_vec_ptr__))); \
+            for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
                 Vector_push((__new_vec_ptr__), (__mapper__)((*(__vec_ptr__))[__i__])); \
             } \
         } while (0)
-    #else
+    #else // COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
          * 
@@ -979,12 +1034,12 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             assert((__new_vec_ptr__) != NULL); \
             (*(__new_vec_ptr__)) = Vector_init(__new_vec_element_type__); \
-            for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+            for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
                 Vector_push((__new_vec_ptr__), (__mapper__)((*(__vec_ptr__))[__i__])); \
             } \
         } while (0)
-    #endif
-#endif
+    #endif // COMPILER_SUPPORTS_TYPEOF
+#endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
@@ -1002,12 +1057,12 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         #define Vector_reduce(__vec_ptr__, __reducer__, __initial_value__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             typeof((__initial_value__)) accumulator = (__initial_value__); \
-            for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+            for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
                 accumulator = (__reducer__)(accumulator, (*(__vec_ptr__))[__i__]); \
             } \
             accumulator; \
         })
-    #else
+    #else // COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
          * 
@@ -1023,13 +1078,13 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         #define Vector_reduce(__vec_ptr__, __reducer__, __initial_value__, __accumulator_type__) ({ \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             __accumulator_type__ accumulator = (__initial_value__); \
-            for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+            for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
                 accumulator = (__reducer__)(accumulator, (*(__vec_ptr__))[__i__]); \
             } \
             accumulator; \
         })
-    #endif
-#else
+    #endif // COMPILER_SUPPORTS_TYPEOF
+#else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
@@ -1045,12 +1100,12 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         #define Vector_reduce(__vec_ptr__, __reducer__, __initial_value__, __result_ptr__) do { \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             typeof((__initial_value__)) __accumulator__ = (__initial_value__); \
-            for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+            for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
                 __accumulator__ = (__reducer__)(__accumulator__, (*(__vec_ptr__))[__i__]); \
             } \
             if ((__result_ptr__) != NULL) { (*(__result_ptr__)) = __accumulator__; } \
         } while (0)
-    #else
+    #else // COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
          * 
@@ -1066,13 +1121,13 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         #define Vector_reduce(__vec_ptr__, __reducer__, __initial_value__, __result_ptr__, __accumulator_type__) do { \
             assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
             __accumulator_type__ __accumulator__ = (__initial_value__); \
-            for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+            for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
                 __accumulator__ = (__reducer__)(__accumulator__, (*(__vec_ptr__))[__i__]); \
             } \
             if ((__result_ptr__) != NULL) { (*(__result_ptr__)) = __accumulator__; } \
         } while (0)
-    #endif
-#endif
+    #endif // COMPILER_SUPPORTS_TYPEOF
+#endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
@@ -1088,7 +1143,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     #define Vector_any(__vec_ptr__, __func__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
         bool __any__ = false; \
-        for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+        for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
             if ((__func__)((*(__vec_ptr__))[__i__])) { \
                 __any__ = true; \
                 break; \
@@ -1096,7 +1151,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         } \
         __any__; \
     })
-#else
+#else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
      * Public
      * 
@@ -1110,7 +1165,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     #define Vector_any(__vec_ptr__, __func__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
         bool __any__ = false; \
-        for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+        for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
             if ((__func__)((*(__vec_ptr__))[__i__])) { \
                 __any__ = true; \
                 break; \
@@ -1118,7 +1173,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         } \
         if ((__result_ptr__) != NULL) { (*(__result_ptr__)) = __any__; } \
     } while (0)
-#endif
+#endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
@@ -1134,7 +1189,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     #define Vector_all(__vec_ptr__, __func__) ({ \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
         bool __all__ = true; \
-        for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+        for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
             if (!(__func__)((*(__vec_ptr__))[__i__])) { \
                 __all__ = false; \
                 break; \
@@ -1142,7 +1197,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         } \
         __all__; \
     })
-#else
+#else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     /**
      * Public
      * 
@@ -1156,7 +1211,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
     #define Vector_all(__vec_ptr__, __func__, __result_ptr__) do { \
         assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL)); \
         bool __all__ = true; \
-        for (size_t __i__ = 0; __i__ < Vector_length((__vec_ptr__)); __i__++) { \
+        for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) { \
             if (!(__func__)((*(__vec_ptr__))[__i__])) { \
                 __all__ = false; \
                 break; \
@@ -1164,7 +1219,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
         } \
         if ((__result_ptr__) != NULL) { (*(__result_ptr__)) = __all__; } \
     } while (0)
-#endif
+#endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 #if COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
@@ -1195,7 +1250,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             } \
             __new_vec__; \
         })
-    #else
+    #else // COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
          * 
@@ -1224,8 +1279,8 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
             } \
             __new_vec__; \
         })
-    #endif
-#else
+    #endif // COMPILER_SUPPORTS_TYPEOF
+#else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
     #if COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
@@ -1255,7 +1310,7 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
                 Vector_push((__new_vec_ptr__), (*(__vec_ptr__))[__i__]); \
             } \
         } while (0)
-    #else
+    #else // COMPILER_SUPPORTS_TYPEOF
         /**
          * Public
          * 
@@ -1285,8 +1340,8 @@ void Vector_set_optimal_capacity_fn(void *vec_ptr, size_t (*optimal_capacity_fn)
                 Vector_push((__new_vec_ptr__), (*(__vec_ptr__))[__i__]); \
             } \
         } while (0)
-    #endif
-#endif
+    #endif // COMPILER_SUPPORTS_TYPEOF
+#endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 #if LANGUAGE_CPP // C++ support
 }
