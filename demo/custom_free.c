@@ -1,15 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "vector.h"
+#include "../vector.h"
 
 void print_vector(int ***vec) {
-    printf("element_size: %ld\n", Vector_element_size(&vec));
-    printf("length: %ld\n", Vector_length(&vec));
-    printf("capacity: %ld\n", Vector_capacity(&vec));
+    printf("element_size: %ld\n", Vector_get_element_size(&vec));
+    printf("length: %ld\n", Vector_get_length(&vec));
+    printf("capacity: %ld\n", Vector_get_capacity(&vec));
     printf("data: [\n");
-    for (int i = 0; i < Vector_length(&vec); i++) {
+    for (int i = 0; i < Vector_get_length(&vec); i++) {
         printf("        [");
-        for (int j = 0; j < Vector_length(vec[i]); j++) {
+        for (int j = 0; j < Vector_get_length(vec[i]); j++) {
             printf("%d ", (*(vec[i]))[j]);
         }
         printf("]\n");
@@ -19,8 +19,8 @@ void print_vector(int ***vec) {
 
 void free_fn(void *vec_ptr) {
     int ****temp_vec = (int ****)vec_ptr;
-    printf("vector length: %zu\n", Vector_length(temp_vec));
-    for (int i = 0; i < Vector_length(temp_vec); i++) {
+    printf("vector length: %zu\n", Vector_get_length(temp_vec));
+    for (int i = 0; i < Vector_get_length(temp_vec); i++) {
         Vector_destroy((*temp_vec)[i]);
         free((*temp_vec)[i]);
     }

@@ -3,12 +3,12 @@
 
 void print_vector_int(int *vec) {
     std::cout << "{" << std::endl;
-    std::cout << "    element_size: " << Vector_element_size(&vec) << std::endl;
-    std::cout << "    length: " << Vector_length(&vec) << std::endl;
-    std::cout << "    capacity: " << Vector_capacity(&vec) << std::endl;
+    std::cout << "    element_size: " << Vector_get_element_size(&vec) << std::endl;
+    std::cout << "    length: " << Vector_get_length(&vec) << std::endl;
+    std::cout << "    capacity: " << Vector_get_capacity(&vec) << std::endl;
     std::cout << "    data: [";
-    if (Vector_length(&vec) != 0) {
-        for (size_t i = 0; i < Vector_length(&vec); i++) {
+    if (Vector_get_length(&vec) != 0) {
+        for (size_t i = 0; i < Vector_get_length(&vec); i++) {
             std::cout << vec[i] << ", ";
         }
     }

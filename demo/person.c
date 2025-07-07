@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <time.h>
-#include <vector.h>
+#include "../vector.h"
 
 typedef struct person {
     char name[50];
@@ -9,11 +9,11 @@ typedef struct person {
 
 void print_vector_int(int *vec) {
     printf("{\n");
-    printf("    element_size: %ld\n", Vector_element_size(&vec));
-    printf("    length: %ld\n", Vector_length(&vec));
-    printf("    capacity: %ld\n", Vector_capacity(&vec));
+    printf("    element_size: %ld\n", Vector_get_element_size(&vec));
+    printf("    length: %ld\n", Vector_get_length(&vec));
+    printf("    capacity: %ld\n", Vector_get_capacity(&vec));
     printf("    data: [");
-    for (size_t i = 0; i < Vector_length(&vec); i++) {
+    for (size_t i = 0; i < Vector_get_length(&vec); i++) {
         printf("%d, ", vec[i]);
     }
     printf("]\n}\n");
@@ -21,11 +21,11 @@ void print_vector_int(int *vec) {
 
 void print_vector_person(Person *vec) {
     printf("{\n");
-    printf("    element_size: %ld\n", Vector_element_size(&vec));
-    printf("    length: %ld\n", Vector_length(&vec));
-    printf("    capacity: %ld\n", Vector_capacity(&vec));
+    printf("    element_size: %ld\n", Vector_get_element_size(&vec));
+    printf("    length: %ld\n", Vector_get_length(&vec));
+    printf("    capacity: %ld\n", Vector_get_capacity(&vec));
     printf("    data: [\n");
-    for (size_t i = 0; i < Vector_length(&vec); i++) {
+    for (size_t i = 0; i < Vector_get_length(&vec); i++) {
         printf("        { name: %s, age: %d }\n", vec[i].name, vec[i].age);
     }
     printf("    ]\n}\n");
