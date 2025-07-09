@@ -11,7 +11,7 @@ To integrate the Generic Vector Library into your project, follow these steps:
 1. Clone the repository into your project directory.
 2. Cd into the 'modules' directory and execute the python script to git clone the necessary dependencies, (you can do it manually if you want, they are listed in the modules.json file).
 3. Cd back and build the source code (create dynamic and static libraries) by executing the command `make export`
-4. Include the vector.h header file in your own project and don't forget to compile it without linking with one of the libraries (you can instead compile the vector.c with no need to create a library and link with it). `gcc -o out my_files.c -l:libvector.a -Lpath/to/lib -Wl,-rpath=path/to/lib`
+4. Include the vector.h header file in your own project and don't forget to compile it without linking with one of the libraries (you can instead compile the vector.c with no need to create a library and link with it). `gcc -o out my_files.c -lvector -Lpath/to/lib -Wl,-rpath=path/to/lib`
 5. Happy coding 🤓
 
 ### Compilers
@@ -20,7 +20,7 @@ This library uses preprocessor directives defined in the `system_env` module to 
 
 -   Statement expressions
 -   Typeof keyword
--   Built-in functions like `__builtin_clz`
+-   Built-in functions like `__builtin_clzl` and it's family
 
 This library provides suppport for `c++` as well by preventing name mangling.
 
@@ -41,9 +41,9 @@ int main(void) {
 #### 2. General information
 
 ```c
-    size_t length         = Vector_length(&vec);
-    size_t element_size   = Vector_element_size(&vec);
-    size_t capacity       = Vector_capacity(&vec);
+    size_t length         = Vector_get_length(&vec);
+    size_t element_size   = Vector_get_element_size(&vec);
+    size_t capacity       = Vector_get_capacity(&vec);
     bool   is_full        = Vector_is_full(&vec);
     bool   is_underfilled = Vector_is_underfilled(&vec);
     bool   is_empty       = Vector_is_empty(&vec);
@@ -71,20 +71,20 @@ int main(void) {
 
 ```c
     int value, index;
-    value = Vector_pop(&vec); // Removes the last element and returns it
-    value = Vector_remove_at(&vec, 3); // Removes the value at the index 3 and returns it
-    index = Vector_remove_value(&vec, 10, lambda(bool, (int value_in_vec, int value_as_param), { return value_in_vec == value_as_param; }))
+    value = Vector_pop(&vec); // Removes the last element and returns it (asserts an error if the vector is empty)
+    value = Vector_remove_at(&vec, 3); // Removes the value at the index 3 and returns it (asserts an error if the the index is out of bounds)
     // Removes a given value from the vector and returns it's index
-    // A function is provided as an argument because costum data types do not get compared using ==
+    // A function is provided as an argument because not ecerything can be compared using ==
     // Also this adds flexibility in terms of using other logic rather than a simple ==
     // if no value matches the callback function, an assertion error will be raised
+    index = Vector_remove_value(&vec, 10, lambda(bool, (int value_in_vec, int value_as_param), { return value_in_vec == value_as_param; }))
     Vector_clear(&vec); // Clears all values from the vector
 ```
 
 #### 6. Utility Functions
 
 ```c
-    int index = Vector_index(&vec, 10, lambda(bool, (int value_in_vec, int value_as_param), { return value_in_vec == value_as_param; })) // returns the index of the first value that validates the compare function. If none, raise an assertion error
+    int index = Vector_index_of(&vec, 10, lambda(bool, (int value_in_vec, int value_as_param), { return value_in_vec == value_as_param; })) // returns the index of the first value that validates the compare function. If none, raise an assertion error
     int count = Vector_count(&vec, 10, lambda(bool, (int value_in_vec, int value_as_param), { return value_in_vec == value_as_param; })) // returns the number of elements that validate the compare function
     int *vec2 = Vector_copy(&vec) // returns a shallow copy of the vector
     Vector_reverse(&vec) // reverses the vector in place
