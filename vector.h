@@ -80,7 +80,7 @@ void *__vector_init(size_t element_size);
  * Public
  * 
  * Initializes a vector
- * @param __T__ [type] - The type of the vector
+ * @param __T__ [type] - The type of the vector elements
  * @return      [T*]   - The vector
  */
 #define Vector_init(__T__) (__T__*)__vector_init(sizeof(__T__))
@@ -465,7 +465,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
          * 
          * Pops the last value from the vector and returns it
          * @param __vec_ptr__          [T**]    - A reference to the vector
-         * @param __vec_element_type__ [type]   - The type of the vector
+         * @param __vec_element_type__ [type]   - The type of the vector elements
          * @return                     [T]      - The value popped from the vector
          * @throw                      [assert] - If the vector is NULL
          * @throw                      [assert] - If malloc fails
@@ -535,7 +535,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
          * Removes the value at the specified index from the vector
          * @param __vec_ptr__          [T**]    - A reference to the vector
          * @param __index__            [size_t] - The index to remove the value from
-         * @param __vec_element_type__ [type]   - The type of the vector
+         * @param __vec_element_type__ [type]   - The type of the vector elements
          * @return                     [T]      - The value removed from the vector
          * @throw                      [assert] - If the vector is NULL
          * @throw                      [assert] - If malloc fails
@@ -622,26 +622,50 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
         })
     #endif // COMPILER_SUPPORTS_TYPEOF
 #else // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
-    /**
-     * Public
-     * 
-     * Removes the first occurrence of the value from the vector
-     * @param __vec_ptr__            [T**]           - A reference to the vector
-     * @param __value__              [T]             - The value to remove
-     * @param __boolean_comparator__ [int (*)(T, T)] - The boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value to search for
-     * @param __result_ptr__         [size_t*]       - A pointer to the variable to store the index of the value removed from the vector, if NULL, the result will not be stored but the function will execute normally
-     * @throw                        [assert]        - If the reference to the vector is NULL
-     * @throw                        [assert]        - If the vector is NULL
-     * @throw                        [assert]        - If malloc fails
-     * @throw                        [assert]        - If the value does not exist in the vector
-     */
-    #define Vector_remove_value(__vec_ptr__, __value__, __boolean_comparator__, __result_ptr__) do { \
-        assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL));                               \
-        size_t __index__;                                                                            \
-        Vector_index_of((__vec_ptr__), (__value__), (__boolean_comparator__), &__index__);           \
-        Vector_remove_at((__vec_ptr__), __index__, (char *)VECTOR_IGNORE_RETURN);                    \
-        if ((__result_ptr__) != NULL) { (*(__result_ptr__)) = __index__; }                           \
-    } while (0)
+    #if COMPILER_SUPPORTS_TYPEOF
+        /**
+         * Public
+         * 
+         * Removes the first occurrence of the value from the vector
+         * @param __vec_ptr__            [T**]           - A reference to the vector
+         * @param __value__              [T]             - The value to remove
+         * @param __boolean_comparator__ [int (*)(T, T)] - The boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value to search for
+         * @param __result_ptr__         [size_t*]       - A pointer to the variable to store the index of the value removed from the vector, if NULL, the result will not be stored but the function will execute normally
+         * @throw                        [assert]        - If the reference to the vector is NULL
+         * @throw                        [assert]        - If the vector is NULL
+         * @throw                        [assert]        - If malloc fails
+         * @throw                        [assert]        - If the value does not exist in the vector
+         */
+        #define Vector_remove_value(__vec_ptr__, __value__, __boolean_comparator__, __result_ptr__) do { \
+            assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL));                               \
+            size_t __index__;                                                                            \
+            Vector_index_of((__vec_ptr__), (__value__), (__boolean_comparator__), &__index__);           \
+            Vector_remove_at((__vec_ptr__), __index__, (typeof(**(__vec_ptr__)) *)VECTOR_IGNORE_RETURN); \
+            if ((__result_ptr__) != NULL) { (*(__result_ptr__)) = __index__; }                           \
+        } while (0)
+    #else // COMPILER_SUPPORTS_TYPEOF
+        /**
+         * Public
+         * 
+         * Removes the first occurrence of the value from the vector
+         * @param __vec_ptr__            [T**]           - A reference to the vector
+         * @param __value__              [T]             - The value to remove
+         * @param __boolean_comparator__ [int (*)(T, T)] - The boolean comparator function to compare the values, the first argument is the value in the vector, the second argument is the value to search for
+         * @param __result_ptr__         [size_t*]       - A pointer to the variable to store the index of the value removed from the vector, if NULL, the result will not be stored but the function will execute normally
+         * @param __vec_element_type__   [type]          - The type of the vector elements
+         * @throw                        [assert]        - If the reference to the vector is NULL
+         * @throw                        [assert]        - If the vector is NULL
+         * @throw                        [assert]        - If malloc fails
+         * @throw                        [assert]        - If the value does not exist in the vector
+         */
+#define Vector_remove_value(__vec_ptr__, __value__, __boolean_comparator__, __result_ptr__, __vec_element_type__) do { \
+            assert(((__vec_ptr__) != NULL) && ((*(__vec_ptr__)) != NULL));                                             \
+            size_t __index__;                                                                                          \
+            Vector_index_of((__vec_ptr__), (__value__), (__boolean_comparator__), &__index__);                         \
+            Vector_remove_at((__vec_ptr__), __index__, (__vec_element_type__ *)VECTOR_IGNORE_RETURN);                  \
+            if ((__result_ptr__) != NULL) { (*(__result_ptr__)) = __index__; }                                         \
+        } while (0)
+    #endif // COMPILER_SUPPORTS_TYPEOF
 #endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
 
 
