@@ -42,6 +42,8 @@ int main(void) {
     for (int i = 0; i < 3; i++)
         Vector_push(&vec_of_vec, Vector_init(int));
 
+    // resize each inner vector by increasing its capacity
+    // make sure that everything works fine and the pointers are valid
     for (int i =  0; i < 15; i++)
         Vector_push(&vec_of_vec[0], i);
     for (int i = 15; i < 30; i++)
@@ -50,6 +52,13 @@ int main(void) {
         Vector_push(&vec_of_vec[2], i);
 
     print_vector(&vec_of_vec);
+
+    // resize vec by increasing the capacity
+    // make sure that everything works fine and the pointers are still valid
+    Vector_push(&vec_of_vec, Vector_init(int));
+    Vector_push(&vec_of_vec, Vector_init(int));
+    print_vector(&vec_of_vec);
+
     Vector_destroy(&vec_of_vec);
     return 0;
 }
