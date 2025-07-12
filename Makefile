@@ -3,7 +3,7 @@ CFLAGS = -Wall -g
 LDFLAGS =
 
 files = "vector.c"
- 
+
 verbose_mode = $(or $(verbose), $(v))
 
 ############ compile ############
