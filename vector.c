@@ -3,6 +3,8 @@
 #include "./vector.h"
 #include "./modules/system_env/system_env.h"
 
+#include <assert.h>
+
 __Vector_Header *__vector_get_header(void *vec_ptr) {
     void **temp_ptr = (void **)vec_ptr;
     assert((temp_ptr != NULL) && (*temp_ptr != NULL));
