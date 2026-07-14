@@ -2,8 +2,6 @@ import json
 import subprocess
 import os
 
-# print(dir(os))
-# os.mkdir('yassine')
 print(os.listdir())
 
 # Load the JSON file

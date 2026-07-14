@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -g
+CFLAGS = -Wall -Wextra -g -fPIC
 LDFLAGS =
 
 files = "vector.c"

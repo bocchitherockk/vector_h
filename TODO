@@ -1,3 +1,5 @@
+TODO: Add Vector_remove_unordered function (an O(1) delete operation in case the order in the verctor does not matter)
+
 DONE: Make Vector_pop and Vector_remove_at statement expressions, (reason: seg fault if the vector is empty)
 DONE: Enhance in code comment documentation
 DONE: Update README.md
