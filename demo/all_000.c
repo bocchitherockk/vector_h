@@ -1,11 +1,11 @@
-#define SYSTEM_ENV_H // this is used to uninclude the "system_env.h", so then i will define various compiler features for testing
+#define SYSTEM_ENV_H // this is used to uninclude the "system_env.h", so that i can define different environment variables for testing
 #define VALUE 0b000
 #define COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS (VALUE & 0b100)
 #define COMPILER_SUPPORTS_TYPEOF (VALUE & 0b010)
 #define COMPILER_SUPPORTS_BUILTIN_CLZ (VALUE & 0b001)
 
 #include <stdio.h>
-#include <time.h>
+#include <assert.h>
 #include "../vector.h"
 
 void print_vector_int(int *vec) {
@@ -21,6 +21,30 @@ void print_vector_int(int *vec) {
         }
     }
     printf("]\n}\n");
+}
+
+bool equal_vec_arr(int *vec, int *arr, size_t arr_length) {
+    if (Vector_get_length(&vec) != arr_length) {
+        return false;
+    }
+    for (size_t i = 0; i < arr_length; i++) {
+        if (vec[i] != arr[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool equal_vec_vec(int *vec1, int *vec2) {
+    if (Vector_get_length(&vec1) != Vector_get_length(&vec2)) {
+        return false;
+    }
+    for (size_t i = 0; i < Vector_get_length(&vec1); i++) {
+        if (vec1[i] != vec2[i]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 // selects the numbers that are equal to the given value
@@ -45,138 +69,139 @@ int main(void) {
     printf("COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS: %s\n", COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS ? "true" : "false");
     printf("COMPILER_SUPPORTS_TYPEOF: %s\n", COMPILER_SUPPORTS_TYPEOF ? "true" : "false");
     printf("COMPILER_SUPPORTS_BUILTIN_CLZ: %s\n", COMPILER_SUPPORTS_BUILTIN_CLZ ? "true" : "false");
-    srand(time(NULL));
 
-    printf("initializing vector vec1 ...\n");
     int *vec1 = Vector_init(int);
 
-    printf("vector vec1 initialized\n");
-    printf("vec1 : ");
-    print_vector_int(vec1);
-
-    printf("pushing 20 random numbers to vec1 ...\n");
-    for (int i = 0; i < 20; i++) {
-        Vector_push(&vec1, rand() % 10);
+    int n1[] = {4, 9, 2, 0, 7, 5, 8, 1, 3, 6, 9, 4, 0, 8, 2, 5, 1, 7, 6, 3};
+    for (size_t i = 0; i < sizeof(n1) / sizeof(n1[0]); i++) {
+        Vector_push(&vec1, n1[i]);
     }
-    printf("20 random numbers pushed to vec1\n");
-    printf("vec1 : ");
-    print_vector_int(vec1);
+    assert(equal_vec_arr(vec1, n1, sizeof(n1) / sizeof(n1[0])));
 
-    printf("getting the index of the first 5 in vec1 ...\n");
+    // getting the index of the first 5
     int index = 0;
     Vector_index_of(&vec1, 5, int_boolean_comparator, &index);
-    printf("index of the first 5 in vec1: %d\n", index);
+    assert(index == 5);
 
-    printf("getting the count of 5s in vec1 ...\n");
+    // getting the count of 5s
     int count = 0;
     Vector_count(&vec1, 5, int_boolean_comparator, &count);
-    printf("count of 5s in vec1: %d\n", count);
+    assert(count == 2);
 
 
-    printf("inserting 100 at index 5 in vec1 ...\n");
+    // inserting 100 at index 5
     Vector_insert_at(&vec1, 5, 100);
-    printf("100 inserted at index 5 in vec1\n");
-    printf("vec1 : ");
-    print_vector_int(vec1);
+    int n2[] = {4, 9, 2, 0, 7, 100, 5, 8, 1, 3, 6, 9, 4, 0, 8, 2, 5, 1, 7, 6, 3};
+    assert(equal_vec_arr(vec1, n2, sizeof(n2) / sizeof(n2[0])));
 
-    printf("popping the last value from vec1 ...\n");
+    // popping the last value
     int popped = 0;
     Vector_pop(&vec1, &popped);
-    printf("popped value: %d\n", popped);
-    printf("vec1 : ");
-    print_vector_int(vec1);
+    int n3[] = {4, 9, 2, 0, 7, 100, 5, 8, 1, 3, 6, 9, 4, 0, 8, 2, 5, 1, 7, 6};
+    assert(popped == 3);
+    assert(equal_vec_arr(vec1, n3, sizeof(n3) / sizeof(n3[0])));
 
-    printf("removing the value at index 0 from vec1 ...\n");
+    // removing the value at index 0
     int removed = -69;
     Vector_remove_at(&vec1, 0, &removed);
-    printf("value removed: %d\n", removed);
-    printf("vec1 : ");
-    print_vector_int(vec1);
+    int n4[] = {9, 2, 0, 7, 100, 5, 8, 1, 3, 6, 9, 4, 0, 8, 2, 5, 1, 7, 6};
+    assert(removed == 4);
+    assert(equal_vec_arr(vec1, n4, sizeof(n4) / sizeof(n4[0])));
 
-    printf("removing the first 5 from vec1 ...\n");
+    // removing the first occurrence of 5
     Vector_remove_value(&vec1, 5, int_boolean_comparator, &index, int);
-    printf("index of the removed 5: %d\n", index);
-    printf("vec1 : ");
-    print_vector_int(vec1);
+    int n5[] = {9, 2, 0, 7, 100, 8, 1, 3, 6, 9, 4, 0, 8, 2, 5, 1, 7, 6};
+    assert(index == 5);
+    assert(equal_vec_arr(vec1, n5, sizeof(n5) / sizeof(n5[0])));
 
-    printf("copying vec1 to vec2 ...\n");
+    // copying vec1 to vec2
     int *vec2 = NULL;
     Vector_copy(&vec1, &vec2);
-    printf("copyed vec1 to vec2\n");
-    printf("vec2 : ");
-    print_vector_int(vec2);
+    assert(equal_vec_vec(vec1, vec2));
 
-    printf("sorting vec2 ...\n");
+    // removing the value at index 3 unordered from vec1
+    Vector_remove_at_unordered(&vec1, 3, &removed);
+    int n6[] = {9, 2, 0, 6, 100, 8, 1, 3, 6, 9, 4, 0, 8, 2, 5, 1, 7};
+    assert(removed == 7);
+    assert(equal_vec_arr(vec1, n6, sizeof(n6) / sizeof(n6[0])));
+
+    // removing the first occurrence of 5 unordered from vec1
+    Vector_remove_value_unordered(&vec1, 5, int_boolean_comparator, &index, int);
+    int n7[] = {9, 2, 0, 6, 100, 8, 1, 3, 6, 9, 4, 0, 8, 2, 7, 1};
+    assert(index == 14);
+    assert(equal_vec_arr(vec1, n7, sizeof(n7) / sizeof(n7[0])));
+
+    // sorting vec2
     Vector_sort(&vec2, int_ordering_comparator, int);
-    printf("vec2 : ");
-    print_vector_int(vec2);
+    int n8[] = {0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 6, 7, 7, 8, 8, 9, 9, 100};
+    assert(equal_vec_arr(vec2, n8, sizeof(n8) / sizeof(n8[0])));
 
-
-    printf("inserting 5 in its sorted position in vec2 ...\n");
+    // inserting 5 in its sorted position in vec2
     Vector_insert_sorted(&vec2, 5, int_ordering_comparator, &index);
-    printf("index of the inserted 5: %d\n", index);
-    printf("vec2 : ");
-    print_vector_int(vec2);
+    int n9[] = {0, 0, 1, 1, 2, 2, 3, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 100};
+    assert(index == 8);
+    assert(equal_vec_arr(vec2, n9, sizeof(n9) / sizeof(n9[0])));
 
-    printf("reversing vec2 ...\n");
+    // reversing vec2
     Vector_reverse(&vec2, int);
-    printf("vec2 : ");
-    print_vector_int(vec2);
+    int n10[] = {100, 9, 9, 8, 8, 7, 7, 6, 6, 5, 5, 4, 3, 2, 2, 1, 1, 0, 0};
+    assert(equal_vec_arr(vec2, n10, sizeof(n10) / sizeof(n10[0])));
 
-    printf("filtering vec2 for even numbers and storing the result in vec3 ...\n");
+    // filtering vec2 for even numbers and storing the result in vec3
     int *vec3 = NULL;
     Vector_filter(&vec2, filter, &vec3, int);
-    printf("vec3 : ");
-    print_vector_int(vec3);
+    int n11[] = {100, 8, 8, 6, 6, 4, 2, 2, 0, 0};
+    assert(equal_vec_arr(vec3, n11, sizeof(n11) / sizeof(n11[0])));
 
-    printf("doubling the values in vec3 ...\n");
+    // doubling the values in vec3
     Vector_foreach(&vec3, for_each);
-    printf("vec3 : ");
-    print_vector_int(vec3);
+    int n12[] = {200, 16, 16, 12, 12, 8, 4, 4, 0, 0};
+    assert(equal_vec_arr(vec3, n12, sizeof(n12) / sizeof(n12[0])));
 
-    printf("mapping vec3 by adding 2 to each value and storing the result in vec4 ...\n");
+    // mapping vec3 by adding 2 to each value and storing the result in vec4
     int *vec4 = NULL;
     Vector_map(&vec3, map, &vec4, int);
-    printf("vec4 : ");
-    print_vector_int(vec4);
+    int n13[] = {202, 18, 18, 14, 14, 10, 6, 6, 2, 2};
+    assert(equal_vec_arr(vec4, n13, sizeof(n13) / sizeof(n13[0])));
 
-
-    printf("calculating the sum of vec4 ...\n");
+    // calculating the sum of vec4
     int sum = 0;
     Vector_reduce(&vec4, sum_reducer, 0, &sum, int);
-    printf("sum of vec4: %d\n", sum);
+    assert(sum == 202 + 18 + 18 + 14 + 14 + 10 + 6 + 6 + 2 + 2);
 
-    printf("checking if any value in vec4 is equal to 10 ...\n");
+    // checking if any value in vec4 is equal to 10
     bool any = false;
     Vector_any(&vec4, any_all, &any);
-    printf("any value is equal to 10: %s\n", any ? "true" : "false");
+    assert(any == true);
 
-    printf("checking if all values in vec4 are equal to 10 ...\n");
-    bool all = false;
+    // checking if all values in vec4 are equal to 10
+    bool all = true;
     Vector_all(&vec4, any_all, &all);
-    printf("all values are equal to 10: %s\n", all ? "true" : "false");
+    assert(all == false);
 
-    printf("setting all values in vec4 to 10 ...\n");
+    // setting all values in vec4 to 10
     Vector_foreach(&vec4, set_all_to_10);
-    printf("vec4 : ");
-    print_vector_int(vec4);
+    int n14[] = {10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
+    assert(equal_vec_arr(vec4, n14, sizeof(n14) / sizeof(n14[0])));
 
-    printf("checking if all values in vec4 are equal to 10 ...\n");
+    // checking if all values in vec4 are equal to 10
     all = false;
     Vector_all(&vec4, any_all, &all);
-    printf("all values are equal to 10: %s\n", all ? "true" : "false");
+    assert(all == true);
 
-    printf("slicing vec4 from index 0 to 10 with a step of 2 and storing the result in vec5 ...\n");
+    // slicing vec1 from index 0 to the end with a step of 2 and storing the result in vec5
     int *vec5 = NULL;
-    Vector_slice(&vec4, 0, Vector_get_length(&vec4), 2, &vec5, int);
+    Vector_slice(&vec1, 0, Vector_get_length(&vec1), 2, &vec5, int);
+    int n15[] = {9, 0, 100, 1, 6, 4, 8, 5, 7};
+    assert(equal_vec_arr(vec5, n15, sizeof(n15) / sizeof(n15[0])));
 
-    printf("vec5 : ");
-    print_vector_int(vec5);
 
     Vector_destroy(&vec1);
     Vector_destroy(&vec2);
     Vector_destroy(&vec3);
     Vector_destroy(&vec4);
     Vector_destroy(&vec5);
+
+    printf("All tests passed successfully!\n");
     return 0;
 }

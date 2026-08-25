@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <time.h>
+#include <assert.h>
 #include "../vector.h"
 
 typedef struct person {
@@ -31,24 +31,58 @@ void print_vector_person(Person *vec) {
     printf("    ]\n}\n");
 }
 
+bool equal_vec_arr_person(Person *vec, Person arr[], size_t arr_length) {
+    if (Vector_get_length(&vec) != arr_length) {
+        return false;
+    }
+    for (size_t i = 0; i < arr_length; i++) {
+        if (strcmp(vec[i].name, arr[i].name) != 0 || vec[i].age != arr[i].age) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool equal_vec_array_int(int *vec, int arr[], size_t arr_length) {
+    if (Vector_get_length(&vec) != arr_length) {
+        return false;
+    }
+    for (size_t i = 0; i < arr_length; i++) {
+        if (vec[i] != arr[i]) {
+            return false;
+        }
+    }
+    return true;
+}
 
 int mapper(Person p) {
     return p.age;
 }
 
 int main(void) {
-    srand(time(NULL));
     Person *vec = Vector_init(Person);
-    for (int i = 0; i < 20; i++) {
-        Person p = { .name = "John Doe", .age = rand() % 100 };
-        Vector_push(&vec, p);
-    }
-    print_vector_person(vec);
+
+    Vector_push(&vec, ((Person){ "Alice", 30 }));
+    Vector_push(&vec, ((Person){ "Bob", 25 }));
+    Vector_push(&vec, ((Person){ "Charlie", 35 }));
+    assert(
+        equal_vec_arr_person(vec, (Person[]){
+            {"Alice", 30},
+            {"Bob", 25},
+            {"Charlie", 35}
+        }, 3)
+        == true
+    );
 
     int *ages = Vector_map(&vec, mapper, int);
-    print_vector_int(ages);
+    assert(
+        equal_vec_array_int(ages, (int[]){30, 25, 35}, 3)
+        == true
+    );
 
     Vector_destroy(&vec);
     Vector_destroy(&ages);
+
+    printf("All tests passed successfully!\n");
     return 0;
 }

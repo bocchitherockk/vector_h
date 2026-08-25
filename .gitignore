@@ -3,6 +3,7 @@
 lib
 object
 demo/bin
+demo/main.py
 
 modules/*
 !modules/modules.json

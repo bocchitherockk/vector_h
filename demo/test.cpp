@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cassert>
 #include "../vector.h"
 
 void print_vector_int(int *vec) {
@@ -15,13 +16,33 @@ void print_vector_int(int *vec) {
     std::cout << "]\n}" << std::endl;
 }
 
+bool equal_vec_arr(int *vec, int arr[], size_t arr_length) {
+    if (Vector_get_length(&vec) != arr_length) {
+        return false;
+    }
+    for (size_t i = 0; i < arr_length; i++) {
+        if (vec[i] != arr[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 int main(void) {
     std::cout << "hello from c++" << std::endl;
     int *vec1 = Vector_init(int);
+    int arr[10] = {0};
     for (int i = 0; i < 10; i++) {
         Vector_push(&vec1, i);
+        arr[i] = i;
     }
-    print_vector_int(vec1);
+
+    assert(
+        equal_vec_arr(vec1, arr, sizeof(arr) / sizeof(arr[0]))
+        == true
+    );
     Vector_destroy(&vec1);
+
+    std::cout << "All tests passed successfully!" << std::endl;
     return 0;
 }

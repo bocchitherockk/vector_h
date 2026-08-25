@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 #include "../vector.h"
 
 
@@ -10,24 +11,26 @@ void print_vec(int **vec_ptr) {
 
 int main()  {
     int *vec = Vector_init(int);
-    print_vec(&vec);
+    assert(Vector_get_initial_capacity(&vec) == VECTOR_DEFAULT_INITIAL_CAPACITY);
 
-    printf("changing initial capacity to 10\n");
     Vector_set_initial_capacity(&vec, 10);
-    print_vec(&vec);
+    assert(Vector_get_initial_capacity(&vec) == 10);
 
     for (int i = 0; i < 10; i++) {
         Vector_push(&vec, i);
     }
-    print_vec(&vec);
+    assert(Vector_get_capacity(&vec) == 10);
 
     Vector_push(&vec, 10);
-    print_vec(&vec);
+    assert(Vector_get_capacity(&vec) == 20);
 
     // this will change the capacity because the default optimal capacity calculation is based on the initial capacity
     Vector_set_initial_capacity(&vec, VECTOR_DEFAULT_INITIAL_CAPACITY);
-    print_vec(&vec);
+    assert(Vector_get_initial_capacity(&vec) == VECTOR_DEFAULT_INITIAL_CAPACITY);
+    assert(Vector_get_capacity(&vec) == 16);
 
     Vector_destroy(&vec);
+
+    printf("All tests passed successfully!\n");
     return 0;
 }

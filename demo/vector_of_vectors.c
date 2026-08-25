@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 #include "../vector.h"
 
 void print_vector(int ***vec) {
@@ -35,6 +36,18 @@ void free_fn(void *vec_ptr) {
     free(__vector_get_header(temp_vec));
 }
 
+bool equal_vec_arr(int *vec, int arr[], size_t arr_length) {
+    if (Vector_get_length(&vec) != arr_length) {
+        return false;
+    }
+    for (size_t i = 0; i < arr_length; i++) {
+        if (vec[i] != arr[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 int main(void) {
     int **vec_of_vec = Vector_init(int *);
     Vector_set_free_fn(&vec_of_vec, free_fn);
@@ -51,14 +64,44 @@ int main(void) {
     for (int i = 30; i < 45; i++)
         Vector_push(&vec_of_vec[2], i);
 
-    print_vector(&vec_of_vec);
+    int n1[][15] = {
+        {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14 },
+        { 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29 },
+        { 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44 }
+    };
+
+    assert(
+        equal_vec_arr(vec_of_vec[0], n1[0], sizeof(n1[0]) / sizeof(n1[0][0]))
+        == true
+    );
+    assert(
+        equal_vec_arr(vec_of_vec[1], n1[1], sizeof(n1[1]) / sizeof(n1[1][0]))
+        == true
+    );
+    assert(
+        equal_vec_arr(vec_of_vec[2], n1[2], sizeof(n1[2]) / sizeof(n1[2][0]))
+        == true
+    );
 
     // resize vec by increasing the capacity
     // make sure that everything works fine and the pointers are still valid
     Vector_push(&vec_of_vec, Vector_init(int));
     Vector_push(&vec_of_vec, Vector_init(int));
-    print_vector(&vec_of_vec);
+    assert(
+        equal_vec_arr(vec_of_vec[0], n1[0], sizeof(n1[0]) / sizeof(n1[0][0]))
+        == true
+    );
+    assert(
+        equal_vec_arr(vec_of_vec[1], n1[1], sizeof(n1[1]) / sizeof(n1[1][0]))
+        == true
+    );
+    assert(
+        equal_vec_arr(vec_of_vec[2], n1[2], sizeof(n1[2]) / sizeof(n1[2][0]))
+        == true
+    );
 
     Vector_destroy(&vec_of_vec);
+
+    printf("All tests passed successfully!\n");
     return 0;
 }
