@@ -293,6 +293,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
 #define Vector_push(__vec_ptr__, __value__) do {                      \
     __vector_resize_if_needed((__vec_ptr__));                         \
     __Vector_Header *__header__ = __vector_get_header((__vec_ptr__)); \
+    assertf(__header__->length < __header__->capacity, "ERROR: Vector is full\n"); \
     (*(__vec_ptr__))[__header__->length++] = (__value__);             \
 } while (0)
 
@@ -1072,6 +1073,7 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
      * @throw                          [assert]   - If the vector is NULL
      * @throw                          [assert]   - If malloc fails
      */
+    // Note: we accept __new_vec_element_type__ even in case of COMPILER_SUPPORTS_TYPEOF because it is required for the case where the mapper function returns a different type than the original vector's element type.
     #define Vector_map(__vec_ptr__, __mapper__, __new_vec_element_type__) ({           \
         __new_vec_element_type__ *__new_vec__ = Vector_init(__new_vec_element_type__); \
         for (size_t __i__ = 0; __i__ < Vector_get_length((__vec_ptr__)); __i__++) {    \
