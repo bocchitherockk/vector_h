@@ -18,8 +18,15 @@ extern "C" {    // prevent name mangling
 typedef void (*Vector_free_fn)(void *vec_ptr);
 typedef size_t (*Vector_calculate_optimal_capacity_fn)(void *vec_ptr);
 
-// i am storing the element size in the header so that i can have a workaround
-// for some functions for the compilers that do not support 'typeof' keyword
+/**
+ * Internal
+ * 
+ * The header of a vector, which contains metadata about the vector
+ * @note The data of the vector is stored in a flexible array member at the end of the struct
+ * @note The header is stored in memory before the data of the vector, so that we can access the header from the data pointer
+ * @note The header is not exposed to the user, and should not be accessed directly
+ * @note I am storing the element size in the header so that i can have a workaround for some functions for the compilers that do not support 'typeof' keyword
+ */
 typedef struct __Vector_Header {
     size_t element_size;
     size_t length;
@@ -53,22 +60,65 @@ void __vector_resize_if_needed(void *vec_ptr);
 /**
  * Internal
  * 
- * Initializes a vector
- * @param element_size [size_t] - The size of the vector type
- * @return             [T*]     - The array of data
- * @throw              [assert] - If malloc fails
+ * The optional parameters for initializing a vector
+ * @note This struct is used to pass optional parameters to the __vector_init function, which is called by the Vector_init macro
+ * @note This struct is not exposed to the user, and should not be accessed directly
  */
-void *__vector_init(size_t element_size);
+typedef struct __Vector_Init_Params {
+    size_t initial_capacity;
+    Vector_free_fn free_fn;
+    Vector_calculate_optimal_capacity_fn calculate_optimal_capacity_fn;
+} __Vector_Init_Params;
 
 /**
- * Public
+ * Internal
  * 
  * Initializes a vector
- * @param __T__ [type] - The type of the vector elements
- * @return      [T*]   - The vector data
+ * @param element_size       [size_t]               - The size of the vector type
+ * @param vector_init_params [__Vector_Init_Params] - The optional parameters for initializing the vector
+ * @return                   [T*]                   - The array of data
+ * @throw                    [assert]               - If malloc fails
  */
-#define Vector_init(__T__) (__T__*)__vector_init(sizeof(__T__))
+void *__vector_init(size_t element_size, __Vector_Init_Params vector_init_params);
 
+#if !LANGUAGE_CPP
+    /**
+     * Public
+     * 
+     * Initializes a vector
+     * @param          __T__                         [type]                                 - The type of the vector elements
+     * @optional param initial_capacity              [size_t]                               - The initial capacity of the vector
+     * @optional param free_fn                       [Vector_free_fn]                       - The free function to free the vector
+     * @optional param calculate_optimal_capacity_fn [Vector_calculate_optimal_capacity_fn] - The function that calculates the optimal capacity of the vector
+     * @return                                       [T*]                                   - The vector data
+     */
+    #define Vector_init(__T__, ...) (__T__*)__vector_init(sizeof(__T__), \
+        (__Vector_Init_Params) { \
+            .initial_capacity = VECTOR_DEFAULT_INITIAL_CAPACITY, \
+            .free_fn = NULL, \
+            .calculate_optimal_capacity_fn = NULL, \
+            __VA_ARGS__ \
+        } \
+    )
+#else // LANGUAGE_CPP
+    /**
+     * Public
+     * 
+     * Initializes a vector
+     * @param  __T__ [type] - The type of the vector elements
+     * @return       [T*]   - The vector data
+     * @note In C++, the optional parameters are not supported. That is because designated initializers in C++ have some limitations that make it impossible to use them in this case.
+     * @note The limitations in this case are that the designated initializers must be specified only once. which is not possible in this case because the optional parameters have default values that are specified in the macro. and if the user specifies a value for an optional parameter, it will be specified twice, which is not allowed in C++.
+     * @note If you are using C++, you have to use the long route of setting those values after the vector is initialized by calling the appropriate function for each field.
+     */
+    #define Vector_init(__T__) (__T__*)__vector_init(sizeof(__T__), \
+        (__Vector_Init_Params) { \
+            .initial_capacity = VECTOR_DEFAULT_INITIAL_CAPACITY, \
+            .free_fn = NULL, \
+            .calculate_optimal_capacity_fn = NULL, \
+        } \
+    )
+#endif // LANGUAGE_CPP
 
 /**
  * Public

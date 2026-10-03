@@ -93,19 +93,20 @@ void __vector_resize_if_needed(void *vec_ptr) {
  * Internal
  * 
  * Initializes a vector
- * @param element_size [size_t] - The size of the vector type
- * @return             [T*]     - The array of data
- * @throw              [assert] - If malloc fails
+ * @param element_size       [size_t]               - The size of the vector type
+ * @param vector_init_params [__Vector_Init_Params] - The optional parameters for initializing the vector
+ * @return                   [T*]                   - The array of data
+ * @throw                    [assert]               - If malloc fails
  */
-void *__vector_init(size_t element_size) {
-    __Vector_Header *header = (__Vector_Header *)malloc(sizeof(__Vector_Header) + element_size * VECTOR_DEFAULT_INITIAL_CAPACITY);
+void *__vector_init(size_t element_size, __Vector_Init_Params vector_init_params) {
+    __Vector_Header *header = (__Vector_Header *)malloc(sizeof(__Vector_Header) + element_size * vector_init_params.initial_capacity);
     assertf(header != NULL, "ERROR: Memory allocation failed\n");
     header->element_size = element_size;
     header->length = 0;
-    header->capacity = VECTOR_DEFAULT_INITIAL_CAPACITY;
-    header->initial_capacity = VECTOR_DEFAULT_INITIAL_CAPACITY;
-    header->free_fn = NULL;
-    header->calculate_optimal_capacity_fn = NULL;
+    header->capacity = vector_init_params.initial_capacity;
+    header->initial_capacity = vector_init_params.initial_capacity;
+    header->free_fn = vector_init_params.free_fn;
+    header->calculate_optimal_capacity_fn = vector_init_params.calculate_optimal_capacity_fn;
     return header->data;
 }
 
