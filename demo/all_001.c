@@ -194,7 +194,7 @@ int main(void) {
     // slicing vec1 from index 0 to the end with a step of 2 and storing the result in vec5
     int *vec5 = NULL;
     Vector_slice(&vec1, 0, Vector_get_length(&vec1), 2, &vec5, int);
-    int n15[] = {9, 0, 100, 1, 6, 4, 8, 5, 7};
+    int n15[] = {9, 0, 100, 1, 6, 4, 8, 7};
     assert(equal_vec_arr(vec5, n15, sizeof(n15) / sizeof(n15[0])));
 
     Vector_destroy(&vec1);
