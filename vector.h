@@ -1,17 +1,199 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include "./modules/system_env/system_env.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <stdarg.h>
+
+
+/////////////////////////////////// ASSERTF_H ///////////////////////////////////
+#ifndef ASSERTF_H
+#define ASSERTF_H
+
+static inline void assertf_impl(const char *file, int line, const char *func, const char *fmt, ...) {
+    va_list args;
+    fprintf(stderr, "%s:%d: in %s(): ", file, line, func);
+    if (*fmt != '\0') { // if not an empty string ""
+        va_start(args, fmt);
+        vfprintf(stderr, fmt, args);
+        va_end(args);
+    }
+    exit(1);
+}
+
+#define assertf(cond, ...) do {                                     \
+    if (!(cond)) {                                                  \
+        assertf_impl(__FILE__, __LINE__, __func__, "" __VA_ARGS__); \
+    }                                                               \
+} while(0)
+
+#endif // ASSERTF_H
+/////////////////////////////////// ASSERTF_H ///////////////////////////////////
+
+
+/////////////////////////////////// SYSTEM_ENV_H ///////////////////////////////////
+/////////////////////////////////// COMPILER ///////////////////////////////////
+#ifndef SYSTEM_ENV_H
+#define SYSTEM_ENV_H
+
+#define COMPILER_EMSCRIPTEN 0
+#define COMPILER_CLANG 0
+#define COMPILER_INTEL 0
+#define COMPILER_TCC 0
+#define COMPILER_MSVC 0
+#define COMPILER_ARM 0
+#define COMPILER_MINGW 0
+#define COMPILER_GCC 0
+#define COMPILER_UNKNOWN 0
+
+#if defined(__EMSCRIPTEN__)
+    #define COMPILER_NAME "emscripten"
+    #undef COMPILER_EMSCRIPTEN
+    #define COMPILER_EMSCRIPTEN 1
+    #define COMPILER_VERSION_MAJOR 0
+    #define COMPILER_VERSION_MINOR 0
+    #define COMPILER_VERSION_PATCH 0
+    // As of my knowledge, emscripten does not define version macros
+#elif defined(__clang__)
+    #define COMPILER_NAME "clang"
+    #undef COMPILER_CLANG
+    #define COMPILER_CLANG 1
+    #define COMPILER_VERSION_MAJOR __clang_major__
+    #define COMPILER_VERSION_MINOR __clang_minor__
+    #define COMPILER_VERSION_PATCH __clang_patchlevel__
+
+#elif defined(__INTEL_COMPILER) || defined(__ICL)
+    // __ICC and __ECC are obsolete
+    // __INTEL_COMPILER = VRP; V = Version; R = Revision; P = Patch
+    #define COMPILER_NAME "intel"
+    #undef COMPILER_INTEL
+    #define COMPILER_INTEL 1
+    #define COMPILER_VERSION_MAJOR (__INTEL_COMPILER / 100)
+    #define COMPILER_VERSION_MINOR ((__INTEL_COMPILER / 10) % 10)
+    #define COMPILER_VERSION_PATCH (__INTEL_COMPILER % 10)
+    #pragma message("this compiler is not tested yet.")
+
+#elif defined(__TINYC__)
+    #define COMPILER_NAME "tcc"
+    #undef COMPILER_TCC
+    #define COMPILER_TCC 1
+    #define COMPILER_VERSION_MAJOR 0 // TCC does not define version macros
+    #define COMPILER_VERSION_MINOR 0
+    #define COMPILER_VERSION_PATCH 0
+
+#elif defined(_MSC_VER)
+    #define COMPILER_NAME "msvc"
+    #undef COMPILER_MSVC
+    #define COMPILER_MSVC 1
+    #define COMPILER_VERSION_MAJOR (_MSC_VER / 100)
+    #define COMPILER_VERSION_MINOR (_MSC_VER % 100)
+    // the patch starting from Visual C++ 6.0 (_MSC_VER = 1200) is represented on 4 digits.
+    // the patch starting from Visual C++ 8.0 (_MSC_VER = 1400) is represented on 5 digits.
+    #if _MSC_VER >= 1400
+        #define COMPILER_VERSION_PATCH (_MSC_FULL_VER % 100000)
+    #elif _MSC_VER >= 1200
+        #define COMPILER_VERSION_PATCH (_MSC_FULL_VER % 10000)
+    #else
+        #define COMPILER_VERSION_PATCH 0
+    #endif
+
+#elif defined(__CC_ARM) && defined(__ARMCC_VERSION)
+    // __ARMCC_VERSION = VRPBBB; V = Version; R = Revision; P = Patch; BBB = Build
+    #define COMPILER_NAME "arm"
+    #undef COMPILER_ARM
+    #define COMPILER_ARM 1
+    #define COMPILER_VERSION_MAJOR (__ARMCC_VERSION / 100000)
+    #define COMPILER_VERSION_MINOR ((__ARMCC_VERSION / 10000) % 10)
+    #define COMPILER_VERSION_PATCH ((__ARMCC_VERSION / 1000) % 10)
+    #pragma message("this compiler is not tested yet.")
+
+#elif defined(__MINGW64__)
+    #define COMPILER_NAME "mingw64"
+    #undef COMPILER_MINGW
+    #define COMPILER_MINGW 1
+    #define COMPILER_VERSION_MAJOR __MINGW64_VERSION_MAJOR
+    #define COMPILER_VERSION_MINOR __MINGW64_VERSION_MINOR
+    #define COMPILER_VERSION_PATCH 0 // MinGW does not define patch level
+    #pragma message("this compiler is not tested yet.")
+    // i don't know if this is even a thing
+
+#elif defined(__MINGW32__)
+    #define COMPILER_NAME "mingw32"
+    #undef COMPILER_MINGW
+    #define COMPILER_MINGW 1
+    #define COMPILER_VERSION_MAJOR __MINGW32_MAJOR_VERSION
+    #define COMPILER_VERSION_MINOR __MINGW32_MINOR_VERSION
+    #define COMPILER_VERSION_PATCH 0 // MinGW does not define patch level
+
+#elif defined(__GNUC__)
+    // i put this at the end because i think even clang and intel define this macro
+    #define COMPILER_NAME "gcc"
+    #undef COMPILER_GCC
+    #define COMPILER_GCC 1
+    #define COMPILER_VERSION_MAJOR __GNUC__
+    #define COMPILER_VERSION_MINOR __GNUC_MINOR__
+    #if defined(__GNUC_PATCHLEVEL__)
+        #define COMPILER_VERSION_PATCH __GNUC_PATCHLEVEL__
+    #else
+        #define COMPILER_VERSION_PATCH 0
+    #endif
+
+#else
+    #define COMPILER_NAME "unknown"
+    #undef COMPILER_UNKNOWN
+    #define COMPILER_UNKNOWN 1
+    #pragma message("Warning: Unknown compiler detected, please add its configuration.")
+#endif
+
+
+// Feature Detection Based on Previously Detected Compiler
+// note: as i said others that have not been tested yet are not included
+// note: i'll be adding more features as i need them
+/* mingw is based on gcc */
+/* emscripten is based on clang */
+/* msvc was tested, and it supports none of those features */
+#define COMPILER_SUPPORTS_TYPEOF                (COMPILER_GCC || COMPILER_CLANG || COMPILER_TCC || COMPILER_MINGW || COMPILER_EMSCRIPTEN)
+#define COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS (COMPILER_GCC || COMPILER_CLANG || COMPILER_TCC || COMPILER_MINGW || COMPILER_EMSCRIPTEN)
+#define COMPILER_SUPPORTS_NESTED_FUNCTIONS      (COMPILER_GCC || COMPILER_MINGW)
+#define COMPILER_SUPPORTS_BUILTIN_CLZ           (COMPILER_GCC || COMPILER_CLANG || COMPILER_MINGW || COMPILER_EMSCRIPTEN)
+/////////////////////////////////// COMPILER ///////////////////////////////////
+
+/////////////////////////////////// LANGUAGE ///////////////////////////////////
+#define LANGUAGE_C 0
+#define LANGUAGE_CPP 0
+
+#ifdef __cplusplus
+    #define LANGUAGE_NAME "C++"
+    #undef LANGUAGE_CPP
+    #define LANGUAGE_CPP 1
+#else
+    #define LANGUAGE_NAME "C"
+    #undef LANGUAGE_C
+    #define LANGUAGE_C 1
+#endif
+
+
+#define C94 (__STDC_VERSION__ == 199409L)
+#define C99 (__STDC_VERSION__ == 199901L)
+#define C11 (__STDC_VERSION__ == 201112L)
+#define C18 (__STDC_VERSION__ == 201710L)
+
+#define CPP98 (__cplusplus == 199711L)
+#define CPP11 (__cplusplus == 201103L)
+#define CPP14 (__cplusplus == 201402L)
+#define CPP17 (__cplusplus == 201703L)
+#define CPP20 (__cplusplus == 202002L)
+
+
+#endif // SYSTEM_ENV_H
+/////////////////////////////////// LANGUAGE ///////////////////////////////////
+/////////////////////////////////// SYSTEM_ENV_H ///////////////////////////////////
 
 #if LANGUAGE_CPP // C++ support
 extern "C" {    // prevent name mangling
 #endif         // C++ support
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-
-#include "./modules/assertf/assertf.h"
 
 #define VECTOR_DEFAULT_INITIAL_CAPACITY 4
 
@@ -100,7 +282,7 @@ void *__vector_init(size_t element_size, __Vector_Init_Params vector_init_params
             __VA_ARGS__ \
         } \
     )
-#else // LANGUAGE_CPP
+#else // !LANGUAGE_CPP
     /**
      * Public
      * 
@@ -118,7 +300,7 @@ void *__vector_init(size_t element_size, __Vector_Init_Params vector_init_params
             .calculate_optimal_capacity_fn = NULL, \
         } \
     )
-#endif // LANGUAGE_CPP
+#endif // !LANGUAGE_CPP
 
 /**
  * Public
@@ -1445,6 +1627,114 @@ void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_op
         } while (0)
     #endif // COMPILER_SUPPORTS_TYPEOF
 #endif // COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS
+
+
+
+// Implementation
+#ifdef VECTOR_IMPLEMENTATION
+
+    __Vector_Header *__vector_get_header(void *vec_ptr) {
+        // I use assert here instead of assertf because i want it to be inlined as much as possible (i havent' actually tested anything, i just assumed)
+        void **temp_ptr = (void **)vec_ptr;
+        assertF(*temp_ptr != NULL, "ERROR: Vector is NULL\n");
+        return (__Vector_Header *)(((char *)*temp_ptr) - sizeof(__Vector_Header));
+    }
+
+    static void *__vector_realloc(void *vec_ptr, size_t new_capacity) {
+        __Vector_Header *old_vec = __vector_get_header(vec_ptr);
+        __Vector_Header *new_vec = (__Vector_Header *)malloc(sizeof(__Vector_Header) + new_capacity * old_vec->element_size);
+        assertf(new_vec != NULL, "ERROR: Memory allocation failed\n");
+        memcpy(new_vec, old_vec, sizeof(__Vector_Header) + old_vec->length * old_vec->element_size);
+        new_vec->capacity = new_capacity;    
+        free(old_vec);
+        return new_vec->data;
+    }
+
+    #if COMPILER_SUPPORTS_BUILTIN_CLZ
+        static size_t __vector_calculate_basic_optimal_capacity(void *vec_ptr) {
+            __Vector_Header *header = __vector_get_header(vec_ptr);
+            if (header->length < header->initial_capacity) { return header->initial_capacity; }
+            size_t optimal_capacity = header->initial_capacity << (__builtin_clzl(header->initial_capacity) - __builtin_clzl(header->length));
+            return optimal_capacity <= header->length ? optimal_capacity << 1 : optimal_capacity;
+        }
+    #else // COMPILER_SUPPORTS_BUILTIN_CLZ
+        static size_t __vector_calculate_basic_optimal_capacity(void *vec_ptr) {
+            __Vector_Header *header = __vector_get_header(vec_ptr);
+            if (header->length < header->initial_capacity) { return header->initial_capacity; }
+            size_t optimal_capacity = header->initial_capacity;
+            while (optimal_capacity <= header->length) { optimal_capacity <<= 1; }
+            return optimal_capacity;
+        }
+    #endif // COMPILER_SUPPORTS_BUILTIN_CLZ
+
+    void __vector_resize_if_needed(void *vec_ptr) {
+        __Vector_Header *header = __vector_get_header(vec_ptr);
+        size_t optimal_capacity = header->calculate_optimal_capacity_fn == NULL ? __vector_calculate_basic_optimal_capacity(vec_ptr) : header->calculate_optimal_capacity_fn(vec_ptr);
+        if (optimal_capacity != header->capacity) {
+            *(void**)vec_ptr = __vector_realloc(vec_ptr, optimal_capacity);
+        }
+    }
+
+    void *__vector_init(size_t element_size, __Vector_Init_Params vector_init_params) {
+        __Vector_Header *header = (__Vector_Header *)malloc(sizeof(__Vector_Header) + element_size * vector_init_params.initial_capacity);
+        assertf(header != NULL, "ERROR: Memory allocation failed\n");
+        header->element_size = element_size;
+        header->length = 0;
+        header->capacity = vector_init_params.initial_capacity;
+        header->initial_capacity = vector_init_params.initial_capacity;
+        header->free_fn = vector_init_params.free_fn;
+        header->calculate_optimal_capacity_fn = vector_init_params.calculate_optimal_capacity_fn;
+        return header->data;
+    }
+
+    size_t Vector_get_element_size(void *vec_ptr) {
+        return __vector_get_header(vec_ptr)->element_size;
+    }
+
+    size_t Vector_get_length(void *vec_ptr) {
+        return __vector_get_header(vec_ptr)->length;
+    }
+
+    size_t Vector_get_capacity(void *vec_ptr) {
+        return __vector_get_header(vec_ptr)->capacity;
+    }
+
+    size_t Vector_get_initial_capacity(void *vec_ptr) {
+        return __vector_get_header(vec_ptr)->initial_capacity;
+    }
+
+    bool Vector_is_full(void *vec_ptr) {
+        __Vector_Header *header = __vector_get_header(vec_ptr);
+        return header->length == header->capacity;
+    }
+
+    bool Vector_is_underfilled(void *vec_ptr) {
+        __Vector_Header *header = __vector_get_header(vec_ptr);
+        return header->capacity > header->initial_capacity && header->length * 2 < header->capacity;
+    }
+
+    bool Vector_is_empty(void *vec_ptr) {
+        return Vector_get_length(vec_ptr) == 0;
+    }
+
+    void Vector_set_initial_capacity(void *vec_ptr, size_t initial_capacity) {
+        // This function calls __vector_resize_if_needed to immidiately resize the vector if it needs to (the default optimal capacity calculation relies on the initial capacity)
+        // This is a fine approach because if the user is sane, they will call this function only once in the lifetime of the vector if not call it at all
+        // which I find it better than overcomplicating the API and making Vector_init take an initial capacity argument.
+        // However, i might consider using optional arguments trick in the future to make Vector_init take optional arguments, but for now, this is fine. (hopefully i don't do that without forgetting to change this comment :D)
+        __vector_get_header(vec_ptr)->initial_capacity = initial_capacity;
+        __vector_resize_if_needed(vec_ptr);
+    }
+
+    void Vector_set_free_fn(void *vec_ptr, Vector_free_fn free_fn) {
+        __vector_get_header(vec_ptr)->free_fn = free_fn;
+    }
+
+    void Vector_set_calculate_optimal_capacity_fn(void *vec_ptr, Vector_calculate_optimal_capacity_fn calculate_optimal_capacity_fn) {
+        __vector_get_header(vec_ptr)->calculate_optimal_capacity_fn = calculate_optimal_capacity_fn;
+    }
+
+#endif // VECTOR_IMPLEMENTATION
 
 #if LANGUAGE_CPP // C++ support
 }

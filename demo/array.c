@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
+#define VECTOR_IMPLEMENTATION
 #include "../vector.h"
 
 #define ARRAY_SIZE 10

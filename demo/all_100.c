@@ -1,4 +1,4 @@
-#define SYSTEM_ENV_H // this is used to uninclude the "system_env.h", so then i will define various compiler features for testing
+#define SYSTEM_ENV_H // this is used to uninclude the SYSTEM_ENV_H in vector.h, so then i will define various compiler features for testing
 #define VALUE 0b100
 #define COMPILER_SUPPORTS_STATEMENT_EXPRESSIONS (VALUE & 0b100)
 #define COMPILER_SUPPORTS_TYPEOF (VALUE & 0b010)
@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#define VECTOR_IMPLEMENTATION
 #include "../vector.h"
 
 void print_vector_int(int *vec) {

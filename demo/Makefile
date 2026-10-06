@@ -26,11 +26,11 @@ $(BIN_DIR):
 
 # Compile C files
 $(BIN_DIR)/%: %.c
-	$(CC) $< ../vector.c -o $@
+	$(CC) $< -o $@
 
 # Compile C++ files
 $(BIN_DIR)/%: %.cpp
-	$(CXX) $< ../vector.c -o $@
+	$(CXX) $< -o $@
 
 run: compile
 	@for bin in $(BINARIES); do \

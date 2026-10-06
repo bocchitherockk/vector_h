@@ -1,99 +1,204 @@
 # Vector.h
 
-## Generic Vector Library in C
+## Generic vector library in C
 
-This Generic Vector Library provides a flexible and efficient way to manage dynamic arrays in C. It supports useful necessary operations from initialization to insertion, deletion, alongside utility functions for sorting, filtering, mapping, and reducing vectors.
+`Vector.h` is a generic, dynamically sized array implementation for C. The
+element type is selected when a vector is initialized, while the vector stores
+its element size and capacity in an internal header.
 
-### Installation
+The library is distributed as a **single header**. There is no separate
+`vector.c` file, library to build, or dependency directory.
 
-To integrate the Generic Vector Library into your project, follow these steps:
+## Installation
 
-1. Clone the repository into your project directory.
-2. Cd into the 'modules' directory and execute the python script to git clone the necessary dependencies, (you can do it manually if you want, they are listed in the modules.json file).
-3. Cd back and build the source code (create dynamic and static libraries) by executing the command `make export`
-4. Include the vector.h header file in your own project and don't forget to compile it without linking with one of the libraries (you can instead compile the vector.c with no need to create a library and link with it). `gcc -o out my_files.c -lvector -Lpath/to/lib -Wl,-rpath=path/to/lib`
-5. Happy coding 🤓
-
-### Compilers
-
-This library uses preprocessor directives defined in the `system_env` module to ensure compatibility with different C compilers by checking support for:
-
--   Statement expressions
--   Typeof keyword
--   Built-in functions like `__builtin_clzl` and it's family
-
-This library provides suppport for `c++` as well by preventing name mangling.
-
-### How to use
-
-#### 1. Initialization and Destruction
+Copy [`vector.h`](./vector.h) into your project, or add this repository to your
+include path. Define `VECTOR_IMPLEMENTATION` in exactly one source file before
+including the header:
 
 ```c
-#include <lambda.h> // https://github.com/bocchitherockk/lambda.h (this is not necessary, you can create normal functions and use them as parameters)
-#include "./vector.h"
+#include <stdio.h>
+
+#define VECTOR_IMPLEMENTATION
+#include "vector.h"
+```
+
+Include the header normally in other source files:
+
+```c
+#include "vector.h"
+```
+
+For example, compile a program with GCC:
+
+```sh
+gcc -std=gnu11 -Wall -Wextra -I/path/to/vector -o example example.c
+```
+
+The implementation is emitted only in the translation unit that defines
+`VECTOR_IMPLEMENTATION`, so do not define it in more than one source file.
+There is no `-lvector` link step.
+
+## Compiler support
+
+The header detects the compiler and enables optional implementations for
+statement expressions, `typeof`, nested functions, and built-in count-leading-
+zero operations where available. GCC, Clang, TCC, MinGW, and Emscripten are
+recognized. MSVC is recognized but does not provide the GNU extensions used by
+some convenience macros.
+
+When statement expressions or `typeof` are unavailable, affected operations use
+an alternate form that accepts an output pointer and, where necessary, the
+element type. Use the form supported by the compiler selected by
+`vector.h`.
+
+The header can also be included from C++, and uses `extern "C"` for its
+functions. C++ does not support the optional designated initializer arguments
+of `Vector_init`; set those options with the setter functions instead.
+
+## Usage
+
+### Initialization and destruction
+
+Vectors are typed pointers. Pass a pointer to the vector (`&vec`) to
+operations that may resize or inspect its metadata.
+
+```c
+#include <stdbool.h>
+#include <stdio.h>
+
+#define VECTOR_IMPLEMENTATION
+#include "vector.h"
 
 int main(void) {
-    int *vec = Vector_init(int); // `vec` is initialized as a vector of integers
-    Vector_destroy(&vec); // The vector gets freed from the memory and cannot be used again as it points to NULL, unless reinitialized
+    int *vec = Vector_init(int);
+
+    Vector_push(&vec, 10);
+    Vector_push(&vec, 20);
+
+    printf("length: %zu\n", Vector_get_length(&vec));
+    printf("first value: %d\n", vec[0]);
+
+    Vector_destroy(&vec);
+    return 0;
 }
 ```
 
-#### 2. General information
+The default initial capacity is `VECTOR_DEFAULT_INITIAL_CAPACITY` (4). C
+supports optional initialization parameters:
 
 ```c
-    size_t length         = Vector_get_length(&vec);
-    size_t element_size   = Vector_get_element_size(&vec);
-    size_t capacity       = Vector_get_capacity(&vec);
-    bool   is_full        = Vector_is_full(&vec);
-    bool   is_underfilled = Vector_is_underfilled(&vec);
-    bool   is_empty       = Vector_is_empty(&vec);
+int *vec = Vector_init(int, .initial_capacity = 16);
 ```
 
-#### 3. Adding Elements
+Other initialization options are `.free_fn` and
+`.calculate_optimal_capacity_fn`. They can also be configured after
+initialization with `Vector_set_initial_capacity`,
+`Vector_set_free_fn`, and `Vector_set_calculate_optimal_capacity_fn`.
+
+### Metadata and access
 
 ```c
-    Vector_push(&vec, 10); // Adds the element 10 to the end of the vector
-    Vector_insert_at(&vec, 1, 100); // inserts 100 at index 1
-    int insertion_index = Vector_insert_sorted(&vec, 5, lambda(int, (int value_in_vec, int value_as_param) { return value_in_vec - value_as_param; }));
-    // inserts 5 in it's sorted position, considering that the vector is already sorted and returns the index inserted in
-    Vector_concat(&vec, &vec2); // pushes the elements in vec2 to the end of vec
+size_t element_size = Vector_get_element_size(&vec);
+size_t length       = Vector_get_length(&vec);
+size_t capacity     = Vector_get_capacity(&vec);
+size_t initial      = Vector_get_initial_capacity(&vec);
+bool is_full        = Vector_is_full(&vec);
+bool is_underfilled = Vector_is_underfilled(&vec);
+bool is_empty       = Vector_is_empty(&vec);
+
+int value = vec[0];
+vec[0] = 15;
 ```
 
-#### 4. Accessing Elements
+Pointers into the vector can become invalid after an operation that resizes
+the vector. Do not retain an element pointer across `Vector_push`,
+`Vector_insert_at`, or another operation that may resize the allocation.
+
+### Adding and removing elements
 
 ```c
-    int value = vec[0]; // Access the first element
-    vec[3]    = 15; // setting the value at index 3 to 15
-    int *ptr  = &vec[0]; // this approach is wrong, as this will be a dangling pointer when the vector gets resized upon inserting more elements or deleting
+Vector_push(&vec, 30);
+Vector_insert_at(&vec, 1, 15);
+
+int removed = Vector_pop(&vec);
+int removed_at = Vector_remove_at(&vec, 0);
+int removed_unordered = Vector_remove_at_unordered(&vec, 0);
+
+Vector_clear(&vec);
 ```
 
-#### 5. Removing Elements
+`Vector_remove_at` preserves the order of the remaining elements.
+`Vector_remove_at_unordered` is faster but replaces the removed element with
+the last element. Both return the removed value when the compiler supports the
+expression form. On compilers without that support, pass an output pointer
+instead.
+
+Vectors can also be concatenated:
 
 ```c
-    int value, index;
-    value = Vector_pop(&vec); // Removes the last element and returns it (asserts an error if the vector is empty)
-    value = Vector_remove_at(&vec, 3); // Removes the value at the index 3 and returns it (asserts an error if the the index is out of bounds)
-    // Removes a given value from the vector and returns it's index
-    // A function is provided as an argument because not ecerything can be compared using ==
-    // Also this adds flexibility in terms of using other logic rather than a simple ==
-    // if no value matches the callback function, an assertion error will be raised
-    index = Vector_remove_value(&vec, 10, lambda(bool, (int value_in_vec, int value_as_param), { return value_in_vec == value_as_param; }))
-    Vector_clear(&vec); // Clears all values from the vector
+Vector_concat(&vec, &other_vec);
 ```
 
-#### 6. Utility Functions
+### Callbacks and utility operations
+
+Callbacks are ordinary C functions. For an `int` vector:
 
 ```c
-    int index = Vector_index_of(&vec, 10, lambda(bool, (int value_in_vec, int value_as_param), { return value_in_vec == value_as_param; })) // returns the index of the first value that validates the compare function. If none, raise an assertion error
-    int count = Vector_count(&vec, 10, lambda(bool, (int value_in_vec, int value_as_param), { return value_in_vec == value_as_param; })) // returns the number of elements that validate the compare function
-    int *vec2 = Vector_copy(&vec) // returns a shallow copy of the vector
-    Vector_reverse(&vec) // reverses the vector in place
-    Vector_sort(&vec, lambda(int, (int value_in_vec, int value_as_param), { return value_in_vec - value_as_param; })); // Sorts the vector in place according to the sorting function given using merge sort algorithm
-    int *vec3 = Vector_filter(&vec, lambda(bool, (int value_in_vec), { return int value_in_vec % 2 == 0; })); // returns a new filtered vector of even numbers
-    Vector_foreach(&vec, lambda(void, (int *value_in_vec_ptr), { *value_in_vec_ptr *= 2; })); // multiplies each value in the vector by 2, modifies the vector in place
-    int *vec4 = Vector_map(&vec, lambda(int, (int value_in_vec), { return value_in_vec + 2; }), int); // Returns a new vector with each value mapped by the mapper function, the result of the map function is a vector and it's type is specified in the third parameter
-    int sum = Vector_reduce(&vec, lambda(int, (int accumulator, int value_in_vec), { return accumulator + value_in_vec; }), 0); // Calculates the sum of elements
-    bool all = Vector_all(&vec, lambda(bool, (int value_in_vec), { return value_in_vec == 10; })); // checks to see if all values in the vector verify the callback function (the callback returns true)
-    bool any = Vector_any(&vec, lambda(bool, (int value_in_vec), { return value_in_vec == 10; })); // checks to see if any of the values in the vector verify the callback function
-    int *vec5 = Vector_slice(&vec, 0, Vector_length(&vec), 2); // slices vec from index 0 to Vector_length(vec) by a step 2 and returns it
+static bool equals(int value, int wanted) {
+    return value == wanted;
+}
+
+static int ascending(int left, int right) {
+    return left - right;
+}
+
+static bool is_even(int value) {
+    return value % 2 == 0;
+}
+
+static void double_value(int *value) {
+    *value *= 2;
+}
+
+static int add(int accumulator, int value) {
+    return accumulator + value;
+}
+
+size_t index = Vector_index_of(&vec, 10, equals);
+size_t count = Vector_count(&vec, 10, equals);
+Vector_sort(&vec, ascending);
+size_t inserted = Vector_insert_sorted(&vec, 10, ascending);
+
+int *copy = Vector_copy(&vec);
+int *evens = Vector_filter(&vec, is_even);
+Vector_foreach(&vec, double_value);
+int sum = Vector_reduce(&vec, add, 0);
+bool all_even = Vector_all(&vec, is_even);
+bool any_even = Vector_any(&vec, is_even);
+int *every_other = Vector_slice(&vec, 0, Vector_get_length(&vec), 2);
 ```
+
+`Vector_map` creates a new vector and requires the result element type:
+
+```c
+static int add_two(int value) {
+    return value + 2;
+}
+
+int *mapped = Vector_map(&vec, add_two, int);
+```
+
+Destroy every vector returned by `Vector_copy`, `Vector_filter`,
+`Vector_map`, or `Vector_slice` when it is no longer needed:
+
+```c
+Vector_destroy(&copy);
+Vector_destroy(&evens);
+Vector_destroy(&every_other);
+Vector_destroy(&mapped);
+Vector_destroy(&vec);
+```
+
+See the [`demo/`](./demo/) directory for complete examples, including vectors
+of pointers, custom initial capacities, custom cleanup functions, and
+compiler-feature variants.

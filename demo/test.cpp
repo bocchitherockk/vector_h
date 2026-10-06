@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cassert>
+#define VECTOR_IMPLEMENTATION
 #include "../vector.h"
 
 void print_vector_int(int *vec) {
